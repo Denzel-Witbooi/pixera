@@ -2,16 +2,18 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, Menu, X, Image, LogOut, LogIn } from "lucide-react";
+import { Plus, Menu, X, Image as ImageIcon, LogOut, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Header: React.FC<{ openUploadModal?: () => void }> = ({ openUploadModal }) => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, user, isPublicView, switchToAuthView } = useAuth();
+  const { signOut, user, isPublicView } = useAuth();
+  const { isMobile } = useIsMobile();
   
   useEffect(() => {
     const handleScroll = () => {
@@ -21,6 +23,11 @@ const Header: React.FC<{ openUploadModal?: () => void }> = ({ openUploadModal })
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    // Close menu when location changes
+    setMenuOpen(false);
+  }, [location]);
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
   const closeMenu = () => setMenuOpen(false);
@@ -38,14 +45,14 @@ const Header: React.FC<{ openUploadModal?: () => void }> = ({ openUploadModal })
   return (
     <header 
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 px-6 py-4 transition-all duration-300 flex items-center justify-between",
+        "fixed top-0 left-0 right-0 z-50 px-4 py-3 sm:px-6 sm:py-4 transition-all duration-300 flex items-center justify-between",
         scrolled ? "bg-background/80 backdrop-blur-lg shadow-sm" : "bg-transparent"
       )}
     >
       <div className="flex items-center">
         <Link to="/" className="flex items-center space-x-2">
-          <Image className="w-8 h-8 text-primary" />
-          <span className="text-xl font-medium">VodaPix</span>
+          <ImageIcon className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+          <span className="text-lg sm:text-xl font-medium">VodaPix</span>
         </Link>
       </div>
       
@@ -66,6 +73,7 @@ const Header: React.FC<{ openUploadModal?: () => void }> = ({ openUploadModal })
           <Button 
             onClick={openUploadModal} 
             className="flex items-center space-x-2 bg-primary hover:bg-primary/90"
+            size={isMobile ? "sm" : "default"}
           >
             <Plus className="w-4 h-4" />
             <span>Create Album</span>
@@ -95,21 +103,21 @@ const Header: React.FC<{ openUploadModal?: () => void }> = ({ openUploadModal })
       
       {/* Mobile Menu Button */}
       <button 
-        className="md:hidden text-foreground p-2" 
+        className="md:hidden text-foreground p-1.5 rounded-lg" 
         onClick={toggleMenu}
         aria-label="Toggle Menu"
       >
         {menuOpen ? (
-          <X className="w-6 h-6" />
+          <X className="w-5 h-5" />
         ) : (
-          <Menu className="w-6 h-6" />
+          <Menu className="w-5 h-5" />
         )}
       </button>
       
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="md:hidden fixed inset-0 z-50 bg-background animate-fade-in pt-20">
-          <nav className="flex flex-col items-center space-y-8 p-8">
+        <div className="md:hidden fixed inset-0 z-50 bg-background/98 backdrop-blur-sm animate-fade-in pt-16">
+          <nav className="flex flex-col items-center space-y-6 p-8">
             <Link 
               to="/" 
               className={cn(

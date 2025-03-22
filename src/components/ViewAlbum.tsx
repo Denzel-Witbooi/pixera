@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Share, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ViewAlbumProps {
   items: MediaItem[];
@@ -16,6 +17,7 @@ interface ViewAlbumProps {
 const ViewAlbum: React.FC<ViewAlbumProps> = ({ items, albumTitle, onDownload }) => {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const { toast } = useToast();
+  const { isMobile } = useIsMobile();
   
   const openLightbox = (index: number) => {
     setSelectedIndex(index);
@@ -57,31 +59,31 @@ const ViewAlbum: React.FC<ViewAlbumProps> = ({ items, albumTitle, onDownload }) 
 
   return (
     <>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-medium">{albumTitle}</h1>
-        <div className="flex space-x-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <h1 className="text-xl sm:text-2xl font-medium text-balance line-clamp-2">{albumTitle}</h1>
+        <div className="flex space-x-2 flex-shrink-0">
           <Button 
             variant="outline" 
-            size="sm" 
-            className="flex items-center space-x-1"
+            size={isMobile ? "sm" : "sm"} 
+            className="flex items-center"
             onClick={handleShareAlbum}
           >
-            <Share className="h-4 w-4" />
+            <Share className="h-4 w-4 mr-1.5" />
             <span>Share</span>
           </Button>
           <Button 
             variant="outline" 
-            size="sm" 
-            className="flex items-center space-x-1"
+            size={isMobile ? "sm" : "sm"} 
+            className="flex items-center"
             onClick={onDownload}
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-4 w-4 mr-1.5" />
             <span>Download</span>
           </Button>
         </div>
       </div>
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4">
         {items.map((item, index) => (
           <div
             key={item.id}
@@ -159,7 +161,7 @@ const ViewAlbum: React.FC<ViewAlbumProps> = ({ items, albumTitle, onDownload }) 
                 )}
                 onClick={goToPrevious}
               >
-                <ChevronLeft className="h-6 w-6" />
+                <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
               </Button>
               
               <Button
@@ -171,17 +173,17 @@ const ViewAlbum: React.FC<ViewAlbumProps> = ({ items, albumTitle, onDownload }) 
                 )}
                 onClick={goToNext}
               >
-                <ChevronRight className="h-6 w-6" />
+                <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
               </Button>
             </div>
             
             <div className="mt-2 px-2">
-              <p className="text-sm font-medium">
+              <p className="text-sm font-medium text-balance line-clamp-1">
                 {selectedIndex !== null &&
                   (items[selectedIndex].title || `Item ${selectedIndex + 1}`)}
               </p>
               {selectedIndex !== null && items[selectedIndex].description && (
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground mt-1 text-balance line-clamp-2">
                   {items[selectedIndex].description}
                 </p>
               )}

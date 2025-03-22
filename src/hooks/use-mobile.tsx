@@ -1,19 +1,46 @@
+
 import * as React from "react"
 
-const MOBILE_BREAKPOINT = 768
+// Define standard breakpoints
+export const BREAKPOINTS = {
+  mobile: 640,    // sm
+  tablet: 768,    // md
+  laptop: 1024,   // lg
+  desktop: 1280,  // xl
+}
 
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
+  const [windowSize, setWindowSize] = React.useState<{
+    width: number | undefined;
+    height: number | undefined;
+  }>({
+    width: undefined,
+    height: undefined,
+  });
 
   React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+    // Handler to call on window resize
+    function handleResize() {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
     }
-    mql.addEventListener("change", onChange)
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    return () => mql.removeEventListener("change", onChange)
-  }, [])
+    
+    // Add event listener
+    window.addEventListener("resize", handleResize);
+    
+    // Call handler right away so state gets updated with initial window size
+    handleResize();
+    
+    // Remove event listener on cleanup
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
-  return !!isMobile
+  return {
+    isMobile: windowSize.width ? windowSize.width < BREAKPOINTS.mobile : false,
+    isTablet: windowSize.width ? windowSize.width >= BREAKPOINTS.mobile && windowSize.width < BREAKPOINTS.laptop : false,
+    isDesktop: windowSize.width ? windowSize.width >= BREAKPOINTS.laptop : true,
+    windowSize,
+  };
 }

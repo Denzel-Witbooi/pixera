@@ -75,6 +75,12 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Improve tap target sizes on mobile */
+  button, a {
+    @apply touch-manipulation;
   }
 }
 
@@ -87,6 +93,13 @@
     text-wrap: balance;
   }
   
+  /* Fix for iOS overscroll */
+  .overscroll-none {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+  }
+  
+  /* Custom scrollbar styling */
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -102,6 +115,23 @@
   
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     @apply bg-muted-foreground/50;
+  }
+  
+  /* Safe area padding utilities for modern mobile browsers */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
   }
 }
 
@@ -128,5 +158,11 @@
   
   .image-card:hover img {
     @apply scale-105;
+  }
+  
+  /* Mobile optimized button styles */
+  .mobile-btn {
+    @apply py-2.5 px-4 text-sm font-medium rounded-lg flex items-center justify-center;
+    min-height: 44px; /* Apple's recommended minimum tap target size */
   }
 }

@@ -36,16 +36,16 @@ const AlbumCard: React.FC<AlbumCardProps> = ({ album, className }) => {
       </div>
       
       <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-        <div className="space-y-1.5">
-          <h3 className="font-medium text-lg line-clamp-1">{album.title}</h3>
-          <p className="text-sm text-white/80 line-clamp-1">{album.description}</p>
+        <div className="space-y-1">
+          <h3 className="font-medium text-lg line-clamp-1 text-balance" title={album.title}>{album.title}</h3>
+          <p className="text-sm text-white/80 line-clamp-2 text-balance" title={album.description}>{album.description}</p>
           
           <div className="flex items-center justify-between text-xs text-white/70 pt-1">
             <div className="flex items-center">
-              <Calendar className="w-3 h-3 mr-1" />
-              <span>{formattedDate}</span>
+              <Calendar className="w-3 h-3 mr-1 flex-shrink-0" />
+              <span className="truncate">{formattedDate}</span>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center ml-2 flex-shrink-0">
               <Image className="w-3 h-3 mr-1" />
               <span>{album.itemCount} items</span>
             </div>

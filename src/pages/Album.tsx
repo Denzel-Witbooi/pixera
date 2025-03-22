@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -7,13 +6,14 @@ import UploadModal from "@/components/UploadModal";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { Album, MediaItem } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Loader2, LogIn } from "lucide-react";
+import { ChevronLeft, Loader2, LogIn, Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { mapAlbumFromDB, mapMediaItemsFromDB } from "@/lib/mappers";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const AlbumPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +26,7 @@ const AlbumPage = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isMobile } = useIsMobile();
 
   useEffect(() => {
     const fetchAlbumData = async () => {
@@ -34,7 +35,6 @@ const AlbumPage = () => {
       try {
         setIsLoading(true);
         
-        // Fetch album
         const { data: albumData, error: albumError } = await supabase
           .from("albums")
           .select("*")
@@ -52,7 +52,6 @@ const AlbumPage = () => {
         
         setAlbum(mapAlbumFromDB(albumData));
         
-        // Fetch media items
         const { data: mediaData, error: mediaError } = await supabase
           .from("media_items")
           .select("*")
@@ -87,15 +86,10 @@ const AlbumPage = () => {
     if (!album || !id || !user) return;
     
     try {
-      // Upload files to Supabase Storage
       const newMediaItems = await uploadToStorage(files, id);
       
-      // Media items are already added to the database in the uploadToStorage function
-      
-      // Update local state
       setMediaItems(prev => [...prev, ...newMediaItems]);
       
-      // Update album cover if it was empty
       if (!album.coverUrl && newMediaItems.length > 0) {
         const { error: updateError } = await supabase
           .from("albums")
@@ -149,8 +143,6 @@ const AlbumPage = () => {
       
       if (!folder) throw new Error("Failed to create zip folder");
       
-      // For a real implementation, you'd download the actual files
-      // This is a simplified version that just creates a placeholder text file
       folder.file("readme.txt", "This is a placeholder for the actual album download.");
       
       const content = await zip.generateAsync({ type: "blob" });
@@ -203,18 +195,18 @@ const AlbumPage = () => {
     <div className="min-h-screen bg-background animate-fade-in">
       <Header openUploadModal={user ? openUploadModal : undefined} />
       
-      <main className="container max-w-7xl mx-auto px-4 sm:px-6 pt-24 pb-16">
-        <div className="mb-8">
+      <main className="container max-w-7xl mx-auto px-4 pt-20 sm:pt-24 pb-12 sm:pb-16">
+        <div className="mb-6 sm:mb-8">
           <Link to="/" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors mb-4">
             <ChevronLeft className="h-4 w-4 mr-1" />
             Back to Gallery
           </Link>
           
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 sm:gap-4">
             <div className="space-y-1">
-              <h1 className="text-3xl font-medium">{album.title}</h1>
+              <h1 className="text-2xl sm:text-3xl font-medium text-balance">{album.title}</h1>
               {album.description && (
-                <p className="text-muted-foreground">{album.description}</p>
+                <p className="text-muted-foreground text-balance line-clamp-2">{album.description}</p>
               )}
             </div>
             
@@ -222,30 +214,37 @@ const AlbumPage = () => {
               <Button 
                 onClick={openUploadModal}
                 variant="outline"
+                size={isMobile ? "sm" : "default"}
+                className="flex-shrink-0 flex items-center"
               >
+                <Plus className="mr-1.5 h-4 w-4" />
                 Add Media
               </Button>
             ) : (
               <Button 
                 onClick={handleSignIn}
                 variant="outline"
-                className="flex items-center space-x-2"
+                size={isMobile ? "sm" : "default"}
+                className="flex-shrink-0 flex items-center space-x-2"
               >
-                <LogIn className="w-4 h-4" />
-                <span>Sign in to add media</span>
+                <LogIn className="w-4 h-4 mr-1.5" />
+                <span>Sign in to add</span>
               </Button>
             )}
           </div>
         </div>
         
         {mediaItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <h3 className="text-xl font-medium text-foreground/80 mb-2">No media in this album</h3>
+          <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-center">
+            <h3 className="text-lg sm:text-xl font-medium text-foreground/80 mb-2">No media in this album</h3>
             <p className="text-muted-foreground mb-6 max-w-md">
               {user ? "Add some photos or videos to get started." : "There are no photos or videos in this album yet."}
             </p>
             {user && (
-              <Button onClick={openUploadModal}>Add Media</Button>
+              <Button onClick={openUploadModal} size={isMobile ? "sm" : "default"}>
+                <Plus className="mr-1.5 h-4 w-4" />
+                Add Media
+              </Button>
             )}
           </div>
         ) : (
@@ -267,7 +266,7 @@ const AlbumPage = () => {
       
       {isDownloading && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-card shadow-lg rounded-lg p-6 max-w-md w-full text-center">
+          <div className="bg-card shadow-lg rounded-lg p-6 max-w-md w-full mx-4 text-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
             <h3 className="text-lg font-medium mb-2">Preparing Download</h3>
             <p className="text-muted-foreground">
