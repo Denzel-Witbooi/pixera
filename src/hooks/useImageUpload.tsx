@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { mapMediaItemFromDB } from "@/lib/mappers";
+import { isValidFileType, getMediaType, isWithinSizeLimit } from "@/lib/storage-helpers";
 
 export const useImageUpload = () => {
   const [uploadState, setUploadState] = useState<UploadState>({
@@ -19,6 +20,17 @@ export const useImageUpload = () => {
       throw new Error("User must be authenticated to upload files");
     }
 
+    // Validate files before starting the upload
+    const invalidFiles = files.filter(file => !isValidFileType(file));
+    if (invalidFiles.length > 0) {
+      throw new Error(`Invalid file type(s): ${invalidFiles.map(f => f.name).join(", ")}`);
+    }
+    
+    const oversizedFiles = files.filter(file => !isWithinSizeLimit(file));
+    if (oversizedFiles.length > 0) {
+      throw new Error(`File(s) exceed size limit: ${oversizedFiles.map(f => f.name).join(", ")}`);
+    }
+
     setUploadState({
       isUploading: true,
       progress: 0,
@@ -30,7 +42,7 @@ export const useImageUpload = () => {
         const fileId = uuidv4();
         const fileExt = file.name.split(".").pop();
         const filePath = `${user.id}/${albumId}/${fileId}.${fileExt}`;
-        const fileType = file.type.startsWith("image/") ? "image" : "video" as "image" | "video";
+        const fileType = getMediaType(file);
         
         // Update progress for this file
         const progressInterval = setInterval(() => {
