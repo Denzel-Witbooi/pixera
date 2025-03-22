@@ -37,10 +37,28 @@ export function useIsMobile() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  return {
-    isMobile: windowSize.width ? windowSize.width < BREAKPOINTS.mobile : false,
-    isTablet: windowSize.width ? windowSize.width >= BREAKPOINTS.mobile && windowSize.width < BREAKPOINTS.laptop : false,
-    isDesktop: windowSize.width ? windowSize.width >= BREAKPOINTS.laptop : true,
-    windowSize,
+  const isMobileValue = windowSize.width ? windowSize.width < BREAKPOINTS.mobile : false;
+  const isTabletValue = windowSize.width ? windowSize.width >= BREAKPOINTS.mobile && windowSize.width < BREAKPOINTS.laptop : false;
+  const isDesktopValue = windowSize.width ? windowSize.width >= BREAKPOINTS.laptop : true;
+
+  // This allows both ways of using the hook:
+  // 1. As a direct boolean: const isMobile = useIsMobile();
+  // 2. As an object with additional properties: const { isMobile, isTablet, ... } = useIsMobile();
+  const result = isMobileValue as unknown as boolean & {
+    isMobile: boolean;
+    isTablet: boolean;
+    isDesktop: boolean;
+    windowSize: {
+      width: number | undefined;
+      height: number | undefined;
+    };
   };
+
+  // Assign properties to the result
+  result.isMobile = isMobileValue;
+  result.isTablet = isTabletValue;
+  result.isDesktop = isDesktopValue;
+  result.windowSize = windowSize;
+
+  return result;
 }
