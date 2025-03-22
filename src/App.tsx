@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Album from "./pages/Album";
 import Auth from "./pages/Auth";
+import CreateAlbum from "./pages/CreateAlbum";
 import NotFound from "./pages/NotFound";
 
 // Create a client
@@ -40,6 +41,7 @@ const AppRoutes = () => (
     <Route path="/auth" element={<Auth />} />
     <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
     <Route path="/album/:id" element={<ProtectedRoute><Album /></ProtectedRoute>} />
+    <Route path="/create-album" element={<ProtectedRoute><CreateAlbum /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

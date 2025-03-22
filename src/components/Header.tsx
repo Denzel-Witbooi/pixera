@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const Header: React.FC<{ openUploadModal?: () => void }> = ({ openUploadModal }) => {
+const Header: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
@@ -42,6 +42,11 @@ const Header: React.FC<{ openUploadModal?: () => void }> = ({ openUploadModal })
     navigate("/auth");
   };
   
+  const handleCreateAlbum = () => {
+    closeMenu();
+    navigate("/create-album");
+  };
+  
   return (
     <header 
       className={cn(
@@ -69,9 +74,9 @@ const Header: React.FC<{ openUploadModal?: () => void }> = ({ openUploadModal })
         </Link>
         
         {/* Only show Create Album for authenticated users */}
-        {user && openUploadModal && (
+        {user && (
           <Button 
-            onClick={openUploadModal} 
+            onClick={handleCreateAlbum} 
             className="flex items-center space-x-2 bg-primary hover:bg-primary/90"
             size={isMobile ? "sm" : "default"}
           >
@@ -130,12 +135,9 @@ const Header: React.FC<{ openUploadModal?: () => void }> = ({ openUploadModal })
             </Link>
             
             {/* Only show Create Album for authenticated users */}
-            {user && openUploadModal && (
+            {user && (
               <Button 
-                onClick={() => {
-                  closeMenu();
-                  openUploadModal();
-                }} 
+                onClick={handleCreateAlbum}
                 className="w-full flex items-center justify-center space-x-2 bg-primary hover:bg-primary/90"
               >
                 <Plus className="w-4 h-4" />

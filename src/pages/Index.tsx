@@ -2,13 +2,11 @@
 import React, { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import AlbumGrid from "@/components/AlbumGrid";
-import UploadModal from "@/components/UploadModal";
-import { useImageUpload } from "@/hooks/useImageUpload";
-import { Album, MediaItem } from "@/lib/types";
+import { Album } from "@/lib/types";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, LogIn } from "lucide-react";
+import { Loader2, LogIn, Plus } from "lucide-react";
 import { mapAlbumsFromDB } from "@/lib/mappers";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -17,9 +15,7 @@ import { useAlbumStats } from "@/hooks/useAlbumStats";
 
 const Index = () => {
   const [albums, setAlbums] = useState<Album[]>([]);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const { uploadToStorage } = useImageUpload();
   const { toast } = useToast();
   const { user, isPublicView } = useAuth();
   const navigate = useNavigate();
@@ -55,64 +51,8 @@ const Index = () => {
     fetchAlbums();
   }, [toast]);
 
-  const openUploadModal = () => setIsUploadModalOpen(true);
-  const closeUploadModal = () => setIsUploadModalOpen(false);
-
-  const handleCreateAlbum = async (albumData: Partial<Album>, files: File[]) => {
-    try {
-      if (!user || !albumData.title) return;
-      
-      const { data: newAlbum, error: albumError } = await supabase
-        .from("albums")
-        .insert({
-          title: albumData.title,
-          description: albumData.description || "",
-          created_at: new Date().toISOString(),
-          user_id: user.id
-        })
-        .select()
-        .single();
-      
-      if (albumError || !newAlbum) {
-        throw albumError || new Error("Failed to create album");
-      }
-      
-      const mediaItems = await uploadToStorage(files, newAlbum.id);
-      
-      if (mediaItems.length > 0) {
-        const { error: updateError } = await supabase
-          .from("albums")
-          .update({ cover_url: mediaItems[0].url })
-          .eq("id", newAlbum.id);
-        
-        if (updateError) {
-          console.error("Error updating album cover:", updateError);
-        }
-      }
-      
-      const { data: updatedAlbums, error: fetchError } = await supabase
-        .from("albums")
-        .select("*")
-        .order("created_at", { ascending: false });
-      
-      if (!fetchError) {
-        setAlbums(mapAlbumsFromDB(updatedAlbums || []));
-      }
-      
-      closeUploadModal();
-      
-      toast({
-        title: "Album created",
-        description: `Successfully created "${albumData.title}" with ${mediaItems.length} items.`
-      });
-    } catch (error) {
-      console.error("Failed to create album:", error);
-      toast({
-        title: "Failed to create album",
-        description: "There was an error creating your album. Please try again.",
-        variant: "destructive"
-      });
-    }
+  const handleCreateAlbum = () => {
+    navigate("/create-album");
   };
 
   const handleSignIn = () => {
@@ -121,7 +61,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background animate-fade-in">
-      <Header openUploadModal={user ? openUploadModal : undefined} />
+      <Header />
       
       <main className="container max-w-7xl mx-auto px-4 pt-20 sm:pt-24 pb-12 sm:pb-16">
         <div className="py-6 sm:py-8">
@@ -135,6 +75,17 @@ const Index = () => {
             <p className="text-base sm:text-lg text-muted-foreground text-balance">
               Create, share, and manage your media collections with ease.
             </p>
+            
+            {user && (
+              <Button 
+                onClick={handleCreateAlbum}
+                className="mt-5 sm:mt-6 flex items-center space-x-2"
+                size={isMobile ? "sm" : "default"}
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create New Album</span>
+              </Button>
+            )}
             
             {!user && isPublicView && (
               <Button 
@@ -157,14 +108,6 @@ const Index = () => {
           )}
         </div>
       </main>
-      
-      {user && (
-        <UploadModal
-          isOpen={isUploadModalOpen}
-          onClose={closeUploadModal}
-          onCreateAlbum={handleCreateAlbum}
-        />
-      )}
     </div>
   );
 };
