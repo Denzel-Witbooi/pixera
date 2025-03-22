@@ -6,10 +6,8 @@ import UploadModal from "@/components/UploadModal";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { Album, MediaItem } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Loader2, LogIn, Plus, Pencil, Trash2, Image } from "lucide-react";
+import { ChevronLeft, Loader2, LogIn, Plus, Pencil, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import JSZip from "jszip";
-import { saveAs } from "file-saver";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { mapAlbumFromDB, mapMediaItemsFromDB } from "@/lib/mappers";
@@ -25,7 +23,6 @@ const AlbumPage = () => {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
   const { uploadToStorage } = useImageUpload();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -145,46 +142,6 @@ const AlbumPage = () => {
     });
   };
 
-  const handleDownloadAlbum = async () => {
-    if (mediaItems.length === 0) {
-      toast({
-        title: "Nothing to download",
-        description: "This album is empty.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setIsDownloading(true);
-    
-    try {
-      const zip = new JSZip();
-      const folder = zip.folder(album?.title || "album");
-      
-      if (!folder) throw new Error("Failed to create zip folder");
-      
-      folder.file("readme.txt", "This is a placeholder for the actual album download.");
-      
-      const content = await zip.generateAsync({ type: "blob" });
-      
-      saveAs(content, `${album?.title || "album"}.zip`);
-      
-      toast({
-        title: "Download complete",
-        description: "Your album has been downloaded successfully."
-      });
-    } catch (error) {
-      console.error("Failed to download album:", error);
-      toast({
-        title: "Download failed",
-        description: "There was an error downloading the album. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
   const handleSignIn = () => {
     navigate("/auth");
   };
@@ -299,7 +256,6 @@ const AlbumPage = () => {
           <ViewAlbum 
             items={mediaItems} 
             albumTitle={album?.title || ""}
-            onDownload={handleDownloadAlbum}
             isEditable={!!isOwner}
           />
         )}
@@ -333,18 +289,6 @@ const AlbumPage = () => {
             </>
           )}
         </>
-      )}
-      
-      {isDownloading && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-card shadow-lg rounded-lg p-6 max-w-md w-full mx-4 text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">Preparing Download</h3>
-            <p className="text-muted-foreground">
-              Please wait while we package your album...
-            </p>
-          </div>
-        </div>
       )}
     </div>
   );

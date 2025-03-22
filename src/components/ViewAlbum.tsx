@@ -1,13 +1,14 @@
-
 import React, { useState } from "react";
 import { MediaItem } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, Share } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MediaItemActions from "@/components/MediaItemActions";
 import { supabase } from "@/integrations/supabase/client";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +23,7 @@ import {
 interface ViewAlbumProps {
   items: MediaItem[];
   albumTitle: string;
-  onDownload: () => void;
+  onDownload?: () => void;
   isEditable?: boolean;
 }
 
@@ -37,6 +38,8 @@ const ViewAlbum: React.FC<ViewAlbumProps> = ({
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isCoverUpdating, setIsCoverUpdating] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const handleDeleteItem = (itemId: string) => {
@@ -50,11 +53,9 @@ const ViewAlbum: React.FC<ViewAlbumProps> = ({
     try {
       setIsDeleting(true);
       
-      // Find the item to get its details
       const itemToDelete = items.find(item => item.id === selectedItemId);
       if (!itemToDelete) return;
       
-      // Delete from database
       const { error } = await supabase
         .from("media_items")
         .delete()
@@ -62,8 +63,6 @@ const ViewAlbum: React.FC<ViewAlbumProps> = ({
       
       if (error) throw error;
       
-      // We'll just reload the page rather than manipulating state
-      // This ensures we get fresh data from the server
       window.location.reload();
       
       toast({
@@ -89,11 +88,9 @@ const ViewAlbum: React.FC<ViewAlbumProps> = ({
     try {
       setIsCoverUpdating(true);
       
-      // Extract album ID from the first media item
       if (items.length === 0) return;
       const albumId = items[0].albumId;
       
-      // Update album cover
       const { error } = await supabase
         .from("albums")
         .update({ cover_url: itemUrl })
@@ -106,8 +103,6 @@ const ViewAlbum: React.FC<ViewAlbumProps> = ({
         description: "The album cover has been successfully updated.",
       });
       
-      // We'll just reload the page rather than manipulating state
-      // This ensures we get fresh data from the server
       window.location.reload();
     } catch (error) {
       console.error("Error updating cover:", error);
@@ -121,19 +116,103 @@ const ViewAlbum: React.FC<ViewAlbumProps> = ({
     }
   };
 
+  const handleDownloadAll = async () => {
+    if (items.length === 0) {
+      toast({
+        title: "Nothing to download",
+        description: "This album is empty.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsDownloading(true);
+    
+    try {
+      const zip = new JSZip();
+      const folder = zip.folder(albumTitle || "album");
+      
+      if (!folder) throw new Error("Failed to create zip folder");
+      
+      const imagePromises = items
+        .filter(item => item.type === "image")
+        .map(async (item, index) => {
+          try {
+            const response = await fetch(item.url);
+            const blob = await response.blob();
+            
+            const extension = item.url.split('.').pop() || 'jpg';
+            const fileName = `${item.title || `image-${index + 1}`}.${extension}`;
+            
+            folder.file(fileName, blob);
+            return true;
+          } catch (error) {
+            console.error(`Failed to download ${item.url}:`, error);
+            return false;
+          }
+        });
+      
+      await Promise.all(imagePromises);
+      
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, `${albumTitle || "album"}.zip`);
+      
+      toast({
+        title: "Download complete",
+        description: `${items.length} images have been downloaded.`
+      });
+    } catch (error) {
+      console.error("Failed to download album:", error);
+      toast({
+        title: "Download failed",
+        description: "There was an error downloading the album. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleShare = () => {
+    setIsShareDialogOpen(true);
+  };
+
+  const copyShareLink = () => {
+    const shareUrl = window.location.href;
+    navigator.clipboard.writeText(shareUrl);
+    
+    toast({
+      title: "Link copied",
+      description: "Album link copied to clipboard."
+    });
+    
+    setIsShareDialogOpen(false);
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-medium">{items.length} {items.length === 1 ? 'Item' : 'Items'}</h2>
-        <Button
-          onClick={onDownload}
-          variant="outline"
-          size={isMobile ? "sm" : "default"}
-          className="flex items-center gap-2"
-        >
-          <Download className="h-4 w-4" />
-          Download All
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleShare}
+            variant="outline"
+            size={isMobile ? "sm" : "default"}
+            className="flex items-center gap-2"
+          >
+            <Share className="h-4 w-4" />
+            Share
+          </Button>
+          <Button
+            onClick={handleDownloadAll}
+            variant="outline"
+            size={isMobile ? "sm" : "default"}
+            className="flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Download All
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -197,6 +276,38 @@ const ViewAlbum: React.FC<ViewAlbumProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Share Album</AlertDialogTitle>
+            <AlertDialogDescription>
+              Share this album with others by copying the link below.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="bg-muted p-3 rounded-md overflow-x-auto mb-4">
+            <code className="text-sm">{window.location.href}</code>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={copyShareLink}>
+              Copy Link
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {isDownloading && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-card shadow-lg rounded-lg p-6 max-w-md w-full mx-4 text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">Downloading Images</h3>
+            <p className="text-muted-foreground">
+              Please wait while we prepare your download...
+            </p>
+          </div>
+        </div>
+      )}
 
       {isCoverUpdating && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
