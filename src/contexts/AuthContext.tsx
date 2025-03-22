@@ -46,6 +46,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setIsLoading(false);
+      
+      // If no user is logged in, automatically enable public view
+      if (!currentSession) {
+        setIsPublicView(true);
+      }
     });
 
     return () => subscription.unsubscribe();
