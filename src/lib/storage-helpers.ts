@@ -1,4 +1,5 @@
 
+
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -46,3 +47,4 @@ export const deleteStorageFile = async (path: string, bucket = 'album_media'): P
   const { error } = await supabase.storage.from(bucket).remove([path]);
   return !error;
 };
+

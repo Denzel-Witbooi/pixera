@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import AlbumGrid from "@/components/AlbumGrid";
@@ -12,6 +13,7 @@ import { mapAlbumsFromDB } from "@/lib/mappers";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAlbumStats } from "@/hooks/useAlbumStats";
 
 const Index = () => {
   const [albums, setAlbums] = useState<Album[]>([]);
@@ -22,6 +24,7 @@ const Index = () => {
   const { user, isPublicView } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
+  const { albumsWithStats, isLoading: isStatsLoading } = useAlbumStats(albums);
 
   useEffect(() => {
     const fetchAlbums = async () => {
@@ -150,7 +153,7 @@ const Index = () => {
               <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <AlbumGrid albums={albums} />
+            <AlbumGrid albums={isStatsLoading ? albums : albumsWithStats} />
           )}
         </div>
       </main>
