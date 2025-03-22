@@ -2,6 +2,8 @@
 import { useState, useCallback } from "react";
 import { MediaItem, UploadState } from "@/lib/types";
 import { v4 as uuidv4 } from "uuid";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useImageUpload = () => {
   const [uploadState, setUploadState] = useState<UploadState>({
@@ -9,10 +11,13 @@ export const useImageUpload = () => {
     progress: 0,
     error: null
   });
+  const { user } = useAuth();
 
-  // This is a mock function to simulate uploading to Supabase
-  // In a real implementation, this would connect to Supabase Storage
   const uploadToStorage = useCallback(async (files: File[], albumId: string): Promise<MediaItem[]> => {
+    if (!user) {
+      throw new Error("User must be authenticated to upload files");
+    }
+
     setUploadState({
       isUploading: true,
       progress: 0,
@@ -20,57 +25,70 @@ export const useImageUpload = () => {
     });
 
     try {
-      // Simulate progress updates
-      const simulateProgress = () => {
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += 10;
+      const uploadPromises = files.map(async (file, index) => {
+        const fileId = uuidv4();
+        const fileExt = file.name.split(".").pop();
+        const filePath = `${user.id}/${albumId}/${fileId}.${fileExt}`;
+        const fileType = file.type.startsWith("image/") ? "image" : "video" as "image" | "video";
+        
+        // Update progress for this file
+        const progressInterval = setInterval(() => {
           setUploadState(prev => ({
             ...prev,
-            progress: Math.min(progress, 90)
+            progress: Math.min(
+              prev.progress + (5 / files.length),
+              90
+            )
           }));
-          
-          if (progress >= 90) {
-            clearInterval(interval);
-          }
-        }, 300);
+        }, 200);
         
-        return interval;
-      };
+        // Upload to Supabase Storage
+        const { data, error } = await supabase.storage
+          .from("album_media")
+          .upload(filePath, file, {
+            cacheControl: "3600",
+            upsert: false
+          });
+        
+        clearInterval(progressInterval);
+        
+        if (error) {
+          throw error;
+        }
+        
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from("album_media")
+          .getPublicUrl(filePath);
+        
+        return {
+          id: fileId,
+          albumId,
+          url: publicUrl,
+          type: fileType,
+          createdAt: new Date().toISOString(),
+          title: file.name
+        };
+      });
       
-      const progressInterval = simulateProgress();
+      const mediaItems = await Promise.all(uploadPromises);
       
-      // Process each file
-      const processedFiles = await Promise.all(
-        files.map(async (file) => {
-          // In a real app, this would upload to Supabase Storage
-          // For now, we'll create a local object URL as a placeholder
-          const fileId = uuidv4();
-          const fileType = file.type.startsWith("image/") ? "image" : "video" as "image" | "video";
-          
-          // We'd normally get this URL from Supabase after upload
-          const url = URL.createObjectURL(file);
-          
-          return {
-            id: fileId,
-            albumId,
-            url,
-            type: fileType,
-            createdAt: new Date().toISOString(),
-            title: file.name
-          };
-        })
-      );
+      // Insert media items into the database
+      const { error } = await supabase
+        .from("media_items")
+        .insert(mediaItems);
       
-      // Complete the progress simulation
-      clearInterval(progressInterval);
+      if (error) {
+        throw error;
+      }
+      
       setUploadState({
         isUploading: false,
         progress: 100,
         error: null
       });
       
-      return processedFiles;
+      return mediaItems;
     } catch (error) {
       console.error("Upload error:", error);
       setUploadState({
@@ -80,7 +98,7 @@ export const useImageUpload = () => {
       });
       throw error;
     }
-  }, []);
+  }, [user]);
 
   return {
     uploadState,

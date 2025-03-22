@@ -6,64 +6,102 @@ import UploadModal from "@/components/UploadModal";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { Album, MediaItem } from "@/lib/types";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 const Index = () => {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { uploadToStorage } = useImageUpload();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
-    // This would normally fetch data from Supabase
-    // For now, we'll load from localStorage if available
-    const savedAlbums = localStorage.getItem("vodapix-albums");
-    if (savedAlbums) {
+    const fetchAlbums = async () => {
+      if (!user) return;
+      
       try {
-        setAlbums(JSON.parse(savedAlbums));
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from("albums")
+          .select("*")
+          .order("created_at", { ascending: false });
+        
+        if (error) {
+          throw error;
+        }
+        
+        setAlbums(data || []);
       } catch (error) {
-        console.error("Failed to parse albums from localStorage:", error);
+        console.error("Error fetching albums:", error);
+        toast({
+          title: "Failed to load albums",
+          description: "There was an error loading your albums.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
       }
-    }
-  }, []);
-
-  useEffect(() => {
-    // Save to localStorage when albums change
-    localStorage.setItem("vodapix-albums", JSON.stringify(albums));
-  }, [albums]);
+    };
+    
+    fetchAlbums();
+  }, [user, toast]);
 
   const openUploadModal = () => setIsUploadModalOpen(true);
   const closeUploadModal = () => setIsUploadModalOpen(false);
 
   const handleCreateAlbum = async (albumData: Partial<Album>, files: File[]) => {
     try {
-      if (!albumData.id) return;
+      if (!user || !albumData.title) return;
       
-      // Upload files (this is a mock function for now)
-      const mediaItems = await uploadToStorage(files, albumData.id);
+      // Insert the album first to get an ID
+      const { data: newAlbum, error: albumError } = await supabase
+        .from("albums")
+        .insert({
+          title: albumData.title,
+          description: albumData.description || "",
+          created_at: new Date().toISOString(),
+          user_id: user.id
+        })
+        .select()
+        .single();
       
-      // Save media items to localStorage (this would be a Supabase insert in a real app)
-      const savedItems = localStorage.getItem("vodapix-media-items");
-      const allItems: MediaItem[] = savedItems ? JSON.parse(savedItems) : [];
-      const updatedItems = [...allItems, ...mediaItems];
-      localStorage.setItem("vodapix-media-items", JSON.stringify(updatedItems));
+      if (albumError || !newAlbum) {
+        throw albumError || new Error("Failed to create album");
+      }
       
-      // Create album with cover image
-      const coverUrl = mediaItems.length > 0 ? mediaItems[0].url : "";
-      const newAlbum: Album = {
-        id: albumData.id,
-        title: albumData.title || "Untitled Album",
-        description: albumData.description || "",
-        coverUrl,
-        createdAt: albumData.createdAt || new Date().toISOString(),
-        itemCount: mediaItems.length
-      };
+      // Upload files
+      const mediaItems = await uploadToStorage(files, newAlbum.id);
       
-      setAlbums(prev => [...prev, newAlbum]);
+      // Update album with cover URL
+      if (mediaItems.length > 0) {
+        const { error: updateError } = await supabase
+          .from("albums")
+          .update({ cover_url: mediaItems[0].url })
+          .eq("id", newAlbum.id);
+        
+        if (updateError) {
+          console.error("Error updating album cover:", updateError);
+        }
+      }
+      
+      // Refetch albums to update the list
+      const { data: updatedAlbums, error: fetchError } = await supabase
+        .from("albums")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (!fetchError) {
+        setAlbums(updatedAlbums || []);
+      }
+      
       closeUploadModal();
       
       toast({
         title: "Album created",
-        description: `Successfully created "${newAlbum.title}" with ${newAlbum.itemCount} items.`
+        description: `Successfully created "${albumData.title}" with ${mediaItems.length} items.`
       });
     } catch (error) {
       console.error("Failed to create album:", error);
@@ -93,7 +131,13 @@ const Index = () => {
             </p>
           </div>
 
-          <AlbumGrid albums={albums} />
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <AlbumGrid albums={albums} />
+          )}
         </div>
       </main>
       

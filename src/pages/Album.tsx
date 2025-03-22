@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import ViewAlbum from "@/components/ViewAlbum";
 import UploadModal from "@/components/UploadModal";
@@ -11,6 +11,8 @@ import { ChevronLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AlbumPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,28 +23,46 @@ const AlbumPage = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const { uploadToStorage } = useImageUpload();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const loadData = () => {
-      setIsLoading(true);
+    const fetchAlbumData = async () => {
+      if (!id || !user) return;
       
       try {
-        const savedAlbums = localStorage.getItem("vodapix-albums");
-        const albums: Album[] = savedAlbums ? JSON.parse(savedAlbums) : [];
-        const currentAlbum = albums.find(a => a.id === id);
+        setIsLoading(true);
         
-        if (!currentAlbum) {
-          setIsLoading(false);
+        // Fetch album
+        const { data: albumData, error: albumError } = await supabase
+          .from("albums")
+          .select("*")
+          .eq("id", id)
+          .single();
+        
+        if (albumError) {
+          throw albumError;
+        }
+        
+        if (!albumData) {
+          navigate("/");
           return;
         }
         
-        setAlbum(currentAlbum);
+        setAlbum(albumData);
         
-        const savedItems = localStorage.getItem("vodapix-media-items");
-        const allItems: MediaItem[] = savedItems ? JSON.parse(savedItems) : [];
-        const albumItems = allItems.filter(item => item.albumId === id);
+        // Fetch media items
+        const { data: mediaData, error: mediaError } = await supabase
+          .from("media_items")
+          .select("*")
+          .eq("album_id", id)
+          .order("created_at", { ascending: true });
         
-        setMediaItems(albumItems);
+        if (mediaError) {
+          throw mediaError;
+        }
+        
+        setMediaItems(mediaData || []);
       } catch (error) {
         console.error("Failed to load album data:", error);
         toast({
@@ -50,55 +70,49 @@ const AlbumPage = () => {
           description: "Failed to load album data. Please try again.",
           variant: "destructive"
         });
+        navigate("/");
       } finally {
         setIsLoading(false);
       }
     };
     
-    loadData();
-  }, [id, toast]);
+    fetchAlbumData();
+  }, [id, user, navigate, toast]);
 
   const openUploadModal = () => setIsUploadModalOpen(true);
   const closeUploadModal = () => setIsUploadModalOpen(false);
 
   const handleAddToAlbum = async (albumData: Partial<Album>, files: File[]) => {
-    if (!album || !id) return;
+    if (!album || !id || !user) return;
     
     try {
+      // Upload files to Supabase Storage
       const newMediaItems = await uploadToStorage(files, id);
       
-      const savedItems = localStorage.getItem("vodapix-media-items");
-      const allItems: MediaItem[] = savedItems ? JSON.parse(savedItems) : [];
-      const updatedItems = [...allItems, ...newMediaItems];
-      localStorage.setItem("vodapix-media-items", JSON.stringify(updatedItems));
+      // Media items are already added to the database in the uploadToStorage function
       
-      const savedAlbums = localStorage.getItem("vodapix-albums");
-      const albums: Album[] = savedAlbums ? JSON.parse(savedAlbums) : [];
-      const updatedAlbums = albums.map(a => {
-        if (a.id === id) {
-          return {
-            ...a,
-            itemCount: a.itemCount + newMediaItems.length,
-            coverUrl: a.coverUrl || (newMediaItems.length > 0 ? newMediaItems[0].url : "")
-          };
-        }
-        return a;
-      });
-      
-      localStorage.setItem("vodapix-albums", JSON.stringify(updatedAlbums));
-      
-      // Type cast is now unnecessary since uploadToStorage is properly typed
+      // Update local state
       setMediaItems(prev => [...prev, ...newMediaItems]);
-      setAlbum(prev => {
-        if (prev) {
-          return {
-            ...prev,
-            itemCount: prev.itemCount + newMediaItems.length,
-            coverUrl: prev.coverUrl || (newMediaItems.length > 0 ? newMediaItems[0].url : "")
-          };
+      
+      // Update album cover if it was empty
+      if (!album.cover_url && newMediaItems.length > 0) {
+        const { error: updateError } = await supabase
+          .from("albums")
+          .update({ cover_url: newMediaItems[0].url })
+          .eq("id", id);
+        
+        if (!updateError) {
+          setAlbum(prev => {
+            if (prev) {
+              return {
+                ...prev,
+                cover_url: newMediaItems[0].url
+              };
+            }
+            return prev;
+          });
         }
-        return prev;
-      });
+      }
       
       closeUploadModal();
       
@@ -134,7 +148,9 @@ const AlbumPage = () => {
       
       if (!folder) throw new Error("Failed to create zip folder");
       
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // For a real implementation, you'd download the actual files
+      // This is a simplified version that just creates a placeholder text file
+      folder.file("readme.txt", "This is a placeholder for the actual album download.");
       
       const content = await zip.generateAsync({ type: "blob" });
       
