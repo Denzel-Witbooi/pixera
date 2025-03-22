@@ -143,7 +143,6 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({
                       <video
                         src={item.url}
                         controls
-                        autoPlay
                         className="w-full h-auto max-h-[80vh] object-contain mx-auto"
                       />
                     )}
