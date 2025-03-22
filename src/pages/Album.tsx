@@ -135,6 +135,16 @@ const AlbumPage = () => {
     }
   };
 
+  const handleUpdateAlbum = async (updatedAlbum: Album) => {
+    if (!album) return;
+    
+    setAlbum(updatedAlbum);
+    toast({
+      title: "Album updated",
+      description: "The album has been successfully updated."
+    });
+  };
+
   const handleDownloadAlbum = async () => {
     if (mediaItems.length === 0) {
       toast({
