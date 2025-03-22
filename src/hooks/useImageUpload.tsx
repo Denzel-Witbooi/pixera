@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from "react";
-import { UploadState } from "@/lib/types";
+import { MediaItem, UploadState } from "@/lib/types";
 import { v4 as uuidv4 } from "uuid";
 
 export const useImageUpload = () => {
@@ -12,7 +12,7 @@ export const useImageUpload = () => {
 
   // This is a mock function to simulate uploading to Supabase
   // In a real implementation, this would connect to Supabase Storage
-  const uploadToStorage = useCallback(async (files: File[], albumId: string) => {
+  const uploadToStorage = useCallback(async (files: File[], albumId: string): Promise<MediaItem[]> => {
     setUploadState({
       isUploading: true,
       progress: 0,
@@ -46,7 +46,7 @@ export const useImageUpload = () => {
           // In a real app, this would upload to Supabase Storage
           // For now, we'll create a local object URL as a placeholder
           const fileId = uuidv4();
-          const fileType = file.type.startsWith("image/") ? "image" : "video";
+          const fileType = file.type.startsWith("image/") ? "image" : "video" as "image" | "video";
           
           // We'd normally get this URL from Supabase after upload
           const url = URL.createObjectURL(file);

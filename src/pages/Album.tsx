@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
@@ -86,6 +87,7 @@ const AlbumPage = () => {
       
       localStorage.setItem("vodapix-albums", JSON.stringify(updatedAlbums));
       
+      // Type cast is now unnecessary since uploadToStorage is properly typed
       setMediaItems(prev => [...prev, ...newMediaItems]);
       setAlbum(prev => {
         if (prev) {
