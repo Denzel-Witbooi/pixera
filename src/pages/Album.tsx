@@ -7,7 +7,7 @@ import UploadModal from "@/components/UploadModal";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { Album, MediaItem } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { ChevronLeft, Loader2, LogIn } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
@@ -29,7 +29,7 @@ const AlbumPage = () => {
 
   useEffect(() => {
     const fetchAlbumData = async () => {
-      if (!id || !user) return;
+      if (!id) return;
       
       try {
         setIsLoading(true);
@@ -78,7 +78,7 @@ const AlbumPage = () => {
     };
     
     fetchAlbumData();
-  }, [id, user, navigate, toast]);
+  }, [id, navigate, toast]);
 
   const openUploadModal = () => setIsUploadModalOpen(true);
   const closeUploadModal = () => setIsUploadModalOpen(false);
@@ -173,6 +173,10 @@ const AlbumPage = () => {
     }
   };
 
+  const handleSignIn = () => {
+    navigate("/auth");
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -197,7 +201,7 @@ const AlbumPage = () => {
 
   return (
     <div className="min-h-screen bg-background animate-fade-in">
-      <Header openUploadModal={openUploadModal} />
+      <Header openUploadModal={user ? openUploadModal : undefined} />
       
       <main className="container max-w-7xl mx-auto px-4 sm:px-6 pt-24 pb-16">
         <div className="mb-8">
@@ -214,12 +218,23 @@ const AlbumPage = () => {
               )}
             </div>
             
-            <Button 
-              onClick={openUploadModal}
-              variant="outline"
-            >
-              Add Media
-            </Button>
+            {user ? (
+              <Button 
+                onClick={openUploadModal}
+                variant="outline"
+              >
+                Add Media
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleSignIn}
+                variant="outline"
+                className="flex items-center space-x-2"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Sign in to add media</span>
+              </Button>
+            )}
           </div>
         </div>
         
@@ -227,9 +242,11 @@ const AlbumPage = () => {
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <h3 className="text-xl font-medium text-foreground/80 mb-2">No media in this album</h3>
             <p className="text-muted-foreground mb-6 max-w-md">
-              Add some photos or videos to get started.
+              {user ? "Add some photos or videos to get started." : "There are no photos or videos in this album yet."}
             </p>
-            <Button onClick={openUploadModal}>Add Media</Button>
+            {user && (
+              <Button onClick={openUploadModal}>Add Media</Button>
+            )}
           </div>
         ) : (
           <ViewAlbum 
@@ -240,11 +257,13 @@ const AlbumPage = () => {
         )}
       </main>
       
-      <UploadModal
-        isOpen={isUploadModalOpen}
-        onClose={closeUploadModal}
-        onCreateAlbum={handleAddToAlbum}
-      />
+      {user && (
+        <UploadModal
+          isOpen={isUploadModalOpen}
+          onClose={closeUploadModal}
+          onCreateAlbum={handleAddToAlbum}
+        />
+      )}
       
       {isDownloading && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">

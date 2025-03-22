@@ -1,16 +1,17 @@
 
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, Menu, X, Image, LogOut } from "lucide-react";
+import { Plus, Menu, X, Image, LogOut, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 
-const Header: React.FC<{ openUploadModal: () => void }> = ({ openUploadModal }) => {
+const Header: React.FC<{ openUploadModal?: () => void }> = ({ openUploadModal }) => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
-  const { signOut, user } = useAuth();
+  const navigate = useNavigate();
+  const { signOut, user, isPublicView, switchToAuthView } = useAuth();
   
   useEffect(() => {
     const handleScroll = () => {
@@ -27,6 +28,11 @@ const Header: React.FC<{ openUploadModal: () => void }> = ({ openUploadModal }) 
   const handleSignOut = async () => {
     closeMenu();
     await signOut();
+  };
+
+  const handleSignIn = () => {
+    closeMenu();
+    navigate("/auth");
   };
   
   return (
@@ -54,14 +60,19 @@ const Header: React.FC<{ openUploadModal: () => void }> = ({ openUploadModal }) 
         >
           Gallery
         </Link>
-        <Button 
-          onClick={openUploadModal} 
-          className="flex items-center space-x-2 bg-primary hover:bg-primary/90"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Create Album</span>
-        </Button>
-        {user && (
+        
+        {/* Only show Create Album for authenticated users */}
+        {user && openUploadModal && (
+          <Button 
+            onClick={openUploadModal} 
+            className="flex items-center space-x-2 bg-primary hover:bg-primary/90"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create Album</span>
+          </Button>
+        )}
+        
+        {user ? (
           <Button 
             onClick={handleSignOut} 
             variant="outline"
@@ -69,6 +80,15 @@ const Header: React.FC<{ openUploadModal: () => void }> = ({ openUploadModal }) 
           >
             <LogOut className="w-4 h-4" />
             <span>Sign Out</span>
+          </Button>
+        ) : (
+          <Button 
+            onClick={handleSignIn} 
+            variant="outline"
+            className="flex items-center space-x-2"
+          >
+            <LogIn className="w-4 h-4" />
+            <span>Sign In</span>
           </Button>
         )}
       </nav>
@@ -100,17 +120,22 @@ const Header: React.FC<{ openUploadModal: () => void }> = ({ openUploadModal }) 
             >
               Gallery
             </Link>
-            <Button 
-              onClick={() => {
-                closeMenu();
-                openUploadModal();
-              }} 
-              className="w-full flex items-center justify-center space-x-2 bg-primary hover:bg-primary/90"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Create Album</span>
-            </Button>
-            {user && (
+            
+            {/* Only show Create Album for authenticated users */}
+            {user && openUploadModal && (
+              <Button 
+                onClick={() => {
+                  closeMenu();
+                  openUploadModal();
+                }} 
+                className="w-full flex items-center justify-center space-x-2 bg-primary hover:bg-primary/90"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create Album</span>
+              </Button>
+            )}
+            
+            {user ? (
               <Button 
                 onClick={handleSignOut}
                 variant="outline"
@@ -118,6 +143,15 @@ const Header: React.FC<{ openUploadModal: () => void }> = ({ openUploadModal }) 
               >
                 <LogOut className="w-4 h-4" />
                 <span>Sign Out</span>
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleSignIn}
+                variant="outline"
+                className="w-full flex items-center justify-center space-x-2"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Sign In</span>
               </Button>
             )}
           </nav>

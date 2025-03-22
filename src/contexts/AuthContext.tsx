@@ -9,9 +9,12 @@ type AuthContextType = {
   session: Session | null;
   user: User | null;
   isLoading: boolean;
+  isPublicView: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  switchToPublicView: () => void;
+  switchToAuthView: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,6 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPublicView, setIsPublicView] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -29,6 +33,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log("Auth state changed:", event);
         setSession(newSession);
         setUser(newSession?.user ?? null);
+        
+        // Reset public view mode when user logs in
+        if (newSession) {
+          setIsPublicView(false);
+        }
       }
     );
 
@@ -103,6 +112,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const switchToPublicView = () => {
+    setIsPublicView(true);
+  };
+
+  const switchToAuthView = () => {
+    setIsPublicView(false);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -112,7 +129,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   return (
-    <AuthContext.Provider value={{ session, user, isLoading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ 
+      session, 
+      user, 
+      isLoading, 
+      isPublicView,
+      signIn, 
+      signUp, 
+      signOut,
+      switchToPublicView,
+      switchToAuthView
+    }}>
       {children}
     </AuthContext.Provider>
   );

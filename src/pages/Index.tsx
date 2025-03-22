@@ -8,8 +8,10 @@ import { Album, MediaItem } from "@/lib/types";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, LogIn } from "lucide-react";
 import { mapAlbumsFromDB } from "@/lib/mappers";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [albums, setAlbums] = useState<Album[]>([]);
@@ -17,12 +19,11 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { uploadToStorage } = useImageUpload();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, isPublicView, switchToAuthView } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAlbums = async () => {
-      if (!user) return;
-      
       try {
         setIsLoading(true);
         const { data, error } = await supabase
@@ -39,7 +40,7 @@ const Index = () => {
         console.error("Error fetching albums:", error);
         toast({
           title: "Failed to load albums",
-          description: "There was an error loading your albums.",
+          description: "There was an error loading albums.",
           variant: "destructive"
         });
       } finally {
@@ -48,7 +49,7 @@ const Index = () => {
     };
     
     fetchAlbums();
-  }, [user, toast]);
+  }, [toast]);
 
   const openUploadModal = () => setIsUploadModalOpen(true);
   const closeUploadModal = () => setIsUploadModalOpen(false);
@@ -114,9 +115,13 @@ const Index = () => {
     }
   };
 
+  const handleSignIn = () => {
+    navigate("/auth");
+  };
+
   return (
     <div className="min-h-screen bg-background animate-fade-in">
-      <Header openUploadModal={openUploadModal} />
+      <Header openUploadModal={user ? openUploadModal : undefined} />
       
       <main className="container max-w-7xl mx-auto px-4 sm:px-6 pt-24 pb-16">
         <div className="py-8">
@@ -130,6 +135,17 @@ const Index = () => {
             <p className="text-lg text-muted-foreground">
               Create, share, and manage your media collections with ease.
             </p>
+            
+            {/* Show sign in prompt for public users */}
+            {!user && isPublicView && (
+              <Button 
+                onClick={handleSignIn}
+                className="mt-6 flex items-center space-x-2"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Sign in to create albums</span>
+              </Button>
+            )}
           </div>
 
           {isLoading ? (
@@ -142,11 +158,13 @@ const Index = () => {
         </div>
       </main>
       
-      <UploadModal
-        isOpen={isUploadModalOpen}
-        onClose={closeUploadModal}
-        onCreateAlbum={handleCreateAlbum}
-      />
+      {user && (
+        <UploadModal
+          isOpen={isUploadModalOpen}
+          onClose={closeUploadModal}
+          onCreateAlbum={handleCreateAlbum}
+        />
+      )}
     </div>
   );
 };

@@ -14,13 +14,14 @@ import NotFound from "./pages/NotFound";
 // Create a client
 const queryClient = new QueryClient();
 
-// Protected route component
+// Protected route component that now supports public viewing
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isPublicView } = useAuth();
   
   if (isLoading) return null;
   
-  if (!user) {
+  // Allow access if user is authenticated or in public view mode
+  if (!user && !isPublicView) {
     return <Navigate to="/auth" replace />;
   }
   
