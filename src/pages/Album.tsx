@@ -13,6 +13,7 @@ import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { mapAlbumFromDB, mapMediaItemsFromDB } from "@/lib/mappers";
 
 const AlbumPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -49,7 +50,7 @@ const AlbumPage = () => {
           return;
         }
         
-        setAlbum(albumData);
+        setAlbum(mapAlbumFromDB(albumData));
         
         // Fetch media items
         const { data: mediaData, error: mediaError } = await supabase
@@ -62,7 +63,7 @@ const AlbumPage = () => {
           throw mediaError;
         }
         
-        setMediaItems(mediaData || []);
+        setMediaItems(mapMediaItemsFromDB(mediaData || []));
       } catch (error) {
         console.error("Failed to load album data:", error);
         toast({
@@ -95,7 +96,7 @@ const AlbumPage = () => {
       setMediaItems(prev => [...prev, ...newMediaItems]);
       
       // Update album cover if it was empty
-      if (!album.cover_url && newMediaItems.length > 0) {
+      if (!album.coverUrl && newMediaItems.length > 0) {
         const { error: updateError } = await supabase
           .from("albums")
           .update({ cover_url: newMediaItems[0].url })
@@ -106,7 +107,7 @@ const AlbumPage = () => {
             if (prev) {
               return {
                 ...prev,
-                cover_url: newMediaItems[0].url
+                coverUrl: newMediaItems[0].url
               };
             }
             return prev;

@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
+import { mapAlbumsFromDB } from "@/lib/mappers";
 
 const Index = () => {
   const [albums, setAlbums] = useState<Album[]>([]);
@@ -33,7 +34,7 @@ const Index = () => {
           throw error;
         }
         
-        setAlbums(data || []);
+        setAlbums(mapAlbumsFromDB(data || []));
       } catch (error) {
         console.error("Error fetching albums:", error);
         toast({
@@ -94,7 +95,7 @@ const Index = () => {
         .order("created_at", { ascending: false });
       
       if (!fetchError) {
-        setAlbums(updatedAlbums || []);
+        setAlbums(mapAlbumsFromDB(updatedAlbums || []));
       }
       
       closeUploadModal();

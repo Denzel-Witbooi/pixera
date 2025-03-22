@@ -4,6 +4,7 @@ import { MediaItem, UploadState } from "@/lib/types";
 import { v4 as uuidv4 } from "uuid";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { mapMediaItemFromDB } from "@/lib/mappers";
 
 export const useImageUpload = () => {
   const [uploadState, setUploadState] = useState<UploadState>({
@@ -61,22 +62,24 @@ export const useImageUpload = () => {
           .from("album_media")
           .getPublicUrl(filePath);
         
+        // Return in the format expected by database
         return {
           id: fileId,
-          albumId,
+          album_id: albumId,
           url: publicUrl,
           type: fileType,
-          createdAt: new Date().toISOString(),
-          title: file.name
+          created_at: new Date().toISOString(),
+          title: file.name,
+          description: null
         };
       });
       
-      const mediaItems = await Promise.all(uploadPromises);
+      const dbMediaItems = await Promise.all(uploadPromises);
       
       // Insert media items into the database
       const { error } = await supabase
         .from("media_items")
-        .insert(mediaItems);
+        .insert(dbMediaItems);
       
       if (error) {
         throw error;
@@ -88,7 +91,8 @@ export const useImageUpload = () => {
         error: null
       });
       
-      return mediaItems;
+      // Convert to MediaItem format for the frontend
+      return dbMediaItems.map(mapMediaItemFromDB);
     } catch (error) {
       console.error("Upload error:", error);
       setUploadState({
