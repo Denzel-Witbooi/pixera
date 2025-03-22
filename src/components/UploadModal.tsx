@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from "react";
 import { Album } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { Loader2, Upload, X, FileImage, FileVideo } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -217,6 +219,18 @@ const UploadModal: React.FC<UploadModalProps> = ({
               </Alert>
             )}
             
+            {uploadState.isUploading && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium">Uploading media...</span>
+                  <span>
+                    {uploadState.completedUploads} of {uploadState.totalUploads} complete
+                  </span>
+                </div>
+                <Progress value={uploadState.progress} className="h-2" />
+              </div>
+            )}
+            
             {selectedFiles.length > 0 && (
               <div className="space-y-2">
                 <p className="text-sm font-medium">
@@ -280,7 +294,9 @@ const UploadModal: React.FC<UploadModalProps> = ({
               {uploadState.isUploading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading {Math.round(uploadState.progress)}%
+                  {uploadState.completedUploads > 0 ? 
+                    `Uploading ${uploadState.completedUploads}/${uploadState.totalUploads}` : 
+                    `Uploading ${Math.round(uploadState.progress)}%`}
                 </>
               ) : (
                 mode === "create-new" ? "Create Album" : "Add to Album"

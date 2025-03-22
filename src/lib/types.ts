@@ -23,4 +23,6 @@ export type UploadState = {
   isUploading: boolean;
   progress: number;
   error: string | null;
+  completedUploads: number;
+  totalUploads: number;
 };

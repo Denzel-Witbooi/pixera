@@ -11,7 +11,9 @@ export const useImageUpload = () => {
   const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
     progress: 0,
-    error: null
+    error: null,
+    completedUploads: 0,
+    totalUploads: 0
   });
   const { user } = useAuth();
 
@@ -34,7 +36,9 @@ export const useImageUpload = () => {
     setUploadState({
       isUploading: true,
       progress: 0,
-      error: null
+      error: null,
+      completedUploads: 0,
+      totalUploads: files.length
     });
 
     try {
@@ -74,6 +78,12 @@ export const useImageUpload = () => {
           .from("album_media")
           .getPublicUrl(filePath);
         
+        // Update completed uploads count
+        setUploadState(prev => ({
+          ...prev,
+          completedUploads: prev.completedUploads + 1
+        }));
+        
         // Return in the format expected by database
         return {
           id: fileId,
@@ -100,7 +110,9 @@ export const useImageUpload = () => {
       setUploadState({
         isUploading: false,
         progress: 100,
-        error: null
+        error: null,
+        completedUploads: files.length,
+        totalUploads: files.length
       });
       
       // Convert to MediaItem format for the frontend
@@ -110,7 +122,9 @@ export const useImageUpload = () => {
       setUploadState({
         isUploading: false,
         progress: 0,
-        error: error instanceof Error ? error.message : "Failed to upload files"
+        error: error instanceof Error ? error.message : "Failed to upload files",
+        completedUploads: 0,
+        totalUploads: 0
       });
       throw error;
     }
