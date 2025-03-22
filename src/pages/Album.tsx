@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
@@ -23,13 +22,10 @@ const AlbumPage = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // This would normally fetch data from Supabase
-    // For now, we'll load from localStorage
     const loadData = () => {
       setIsLoading(true);
       
       try {
-        // Load albums
         const savedAlbums = localStorage.getItem("vodapix-albums");
         const albums: Album[] = savedAlbums ? JSON.parse(savedAlbums) : [];
         const currentAlbum = albums.find(a => a.id === id);
@@ -41,7 +37,6 @@ const AlbumPage = () => {
         
         setAlbum(currentAlbum);
         
-        // Load media items for this album
         const savedItems = localStorage.getItem("vodapix-media-items");
         const allItems: MediaItem[] = savedItems ? JSON.parse(savedItems) : [];
         const albumItems = allItems.filter(item => item.albumId === id);
@@ -69,16 +64,13 @@ const AlbumPage = () => {
     if (!album || !id) return;
     
     try {
-      // Upload files (mock function for now)
       const newMediaItems = await uploadToStorage(files, id);
       
-      // Save media items to localStorage
       const savedItems = localStorage.getItem("vodapix-media-items");
       const allItems: MediaItem[] = savedItems ? JSON.parse(savedItems) : [];
       const updatedItems = [...allItems, ...newMediaItems];
       localStorage.setItem("vodapix-media-items", JSON.stringify(updatedItems));
       
-      // Update album item count
       const savedAlbums = localStorage.getItem("vodapix-albums");
       const albums: Album[] = savedAlbums ? JSON.parse(savedAlbums) : [];
       const updatedAlbums = albums.map(a => {
@@ -86,7 +78,6 @@ const AlbumPage = () => {
           return {
             ...a,
             itemCount: a.itemCount + newMediaItems.length,
-            // Update cover URL if this is the first item
             coverUrl: a.coverUrl || (newMediaItems.length > 0 ? newMediaItems[0].url : "")
           };
         }
@@ -95,7 +86,6 @@ const AlbumPage = () => {
       
       localStorage.setItem("vodapix-albums", JSON.stringify(updatedAlbums));
       
-      // Update local state
       setMediaItems(prev => [...prev, ...newMediaItems]);
       setAlbum(prev => {
         if (prev) {
@@ -142,17 +132,10 @@ const AlbumPage = () => {
       
       if (!folder) throw new Error("Failed to create zip folder");
       
-      // In a real implementation with Supabase, we would fetch binary data
-      // For this demo, we're using object URLs which can't be zipped directly
-      // This is a mock to demonstrate the UI flow
-      
-      // Simulate processing time
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Generate the zip
       const content = await zip.generateAsync({ type: "blob" });
       
-      // Save the file
       saveAs(content, `${album?.title || "album"}.zip`);
       
       toast({
