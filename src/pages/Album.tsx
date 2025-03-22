@@ -189,7 +189,7 @@ const AlbumPage = () => {
     navigate("/auth");
   };
 
-  const isOwner = user && album?.createdBy === user.id;
+  const isOwner = user && album?.userId === user.id;
 
   if (isLoading) {
     return (
