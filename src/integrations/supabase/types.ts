@@ -12,7 +12,7 @@ export type Database = {
       albums: {
         Row: {
           cover_url: string | null
-          created_at: string
+          created_at: string | null
           description: string | null
           id: string
           title: string
@@ -20,7 +20,7 @@ export type Database = {
         }
         Insert: {
           cover_url?: string | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           id?: string
           title: string
@@ -28,7 +28,7 @@ export type Database = {
         }
         Update: {
           cover_url?: string | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           id?: string
           title?: string
@@ -47,7 +47,7 @@ export type Database = {
       media_items: {
         Row: {
           album_id: string
-          created_at: string
+          created_at: string | null
           description: string | null
           id: string
           title: string | null
@@ -56,7 +56,7 @@ export type Database = {
         }
         Insert: {
           album_id: string
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           id?: string
           title?: string | null
@@ -65,7 +65,7 @@ export type Database = {
         }
         Update: {
           album_id?: string
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           id?: string
           title?: string | null
@@ -84,17 +84,17 @@ export type Database = {
       }
       profiles: {
         Row: {
-          created_at: string
+          created_at: string | null
           id: string
           username: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           id: string
           username?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           id?: string
           username?: string | null
         }
