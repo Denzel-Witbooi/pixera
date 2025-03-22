@@ -6,7 +6,7 @@ import UploadModal from "@/components/UploadModal";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { Album, MediaItem } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Loader2, LogIn, Plus } from "lucide-react";
+import { ChevronLeft, Loader2, LogIn, Plus, Pencil, Trash2, Image } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
@@ -14,6 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { mapAlbumFromDB, mapMediaItemsFromDB } from "@/lib/mappers";
 import { useIsMobile } from "@/hooks/use-mobile";
+import EditAlbumDialog from "@/components/EditAlbumDialog";
+import DeleteAlbumDialog from "@/components/DeleteAlbumDialog";
 
 const AlbumPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +23,8 @@ const AlbumPage = () => {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const { uploadToStorage } = useImageUpload();
   const { toast } = useToast();
@@ -81,6 +85,12 @@ const AlbumPage = () => {
 
   const openUploadModal = () => setIsUploadModalOpen(true);
   const closeUploadModal = () => setIsUploadModalOpen(false);
+  
+  const openEditDialog = () => setIsEditDialogOpen(true);
+  const closeEditDialog = () => setIsEditDialogOpen(false);
+  
+  const openDeleteDialog = () => setIsDeleteDialogOpen(true);
+  const closeDeleteDialog = () => setIsDeleteDialogOpen(false);
 
   const handleAddToAlbum = async (albumData: Partial<Album>, files: File[]) => {
     if (!album || !id || !user) return;
@@ -169,6 +179,8 @@ const AlbumPage = () => {
     navigate("/auth");
   };
 
+  const isOwner = user && album?.createdBy === user.id;
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -204,33 +216,59 @@ const AlbumPage = () => {
           
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 sm:gap-4">
             <div className="space-y-1">
-              <h1 className="text-2xl sm:text-3xl font-medium text-balance">{album.title}</h1>
-              {album.description && (
+              <h1 className="text-2xl sm:text-3xl font-medium text-balance">{album?.title}</h1>
+              {album?.description && (
                 <p className="text-muted-foreground text-balance line-clamp-2">{album.description}</p>
               )}
             </div>
             
-            {user ? (
-              <Button 
-                onClick={openUploadModal}
-                variant="outline"
-                size={isMobile ? "sm" : "default"}
-                className="flex-shrink-0 flex items-center"
-              >
-                <Plus className="mr-1.5 h-4 w-4" />
-                Add Media
-              </Button>
-            ) : (
-              <Button 
-                onClick={handleSignIn}
-                variant="outline"
-                size={isMobile ? "sm" : "default"}
-                className="flex-shrink-0 flex items-center space-x-2"
-              >
-                <LogIn className="w-4 h-4 mr-1.5" />
-                <span>Sign in to add</span>
-              </Button>
-            )}
+            <div className="flex gap-2 flex-wrap">
+              {isOwner && (
+                <>
+                  <Button 
+                    onClick={openEditDialog}
+                    variant="outline"
+                    size={isMobile ? "sm" : "default"}
+                    className="flex-shrink-0 flex items-center"
+                  >
+                    <Pencil className="mr-1.5 h-4 w-4" />
+                    Edit
+                  </Button>
+                  
+                  <Button 
+                    onClick={openDeleteDialog}
+                    variant="outline"
+                    size={isMobile ? "sm" : "default"}
+                    className="flex-shrink-0 flex items-center text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="mr-1.5 h-4 w-4" />
+                    Delete
+                  </Button>
+                </>
+              )}
+              
+              {user ? (
+                <Button 
+                  onClick={openUploadModal}
+                  variant="outline"
+                  size={isMobile ? "sm" : "default"}
+                  className="flex-shrink-0 flex items-center"
+                >
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  Add Media
+                </Button>
+              ) : (
+                <Button 
+                  onClick={handleSignIn}
+                  variant="outline"
+                  size={isMobile ? "sm" : "default"}
+                  className="flex-shrink-0 flex items-center space-x-2"
+                >
+                  <LogIn className="w-4 h-4 mr-1.5" />
+                  <span>Sign in to add</span>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
         
@@ -250,18 +288,41 @@ const AlbumPage = () => {
         ) : (
           <ViewAlbum 
             items={mediaItems} 
-            albumTitle={album.title}
+            albumTitle={album?.title || ""}
             onDownload={handleDownloadAlbum}
+            isEditable={!!isOwner}
           />
         )}
       </main>
       
-      {user && (
-        <UploadModal
-          isOpen={isUploadModalOpen}
-          onClose={closeUploadModal}
-          onCreateAlbum={handleAddToAlbum}
-        />
+      {user && album && (
+        <>
+          <UploadModal
+            isOpen={isUploadModalOpen}
+            onClose={closeUploadModal}
+            onCreateAlbum={handleAddToAlbum}
+            initialAlbum={album}
+            mode="add-to-existing"
+          />
+          
+          {isOwner && album && (
+            <>
+              <EditAlbumDialog
+                album={album}
+                isOpen={isEditDialogOpen}
+                onClose={closeEditDialog}
+                onSuccess={handleUpdateAlbum}
+              />
+              
+              <DeleteAlbumDialog
+                albumId={album.id}
+                albumTitle={album.title}
+                isOpen={isDeleteDialogOpen}
+                onClose={closeDeleteDialog}
+              />
+            </>
+          )}
+        </>
       )}
       
       {isDownloading && (
