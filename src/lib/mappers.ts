@@ -1,4 +1,3 @@
-
 import { Album, MediaItem } from "./types";
 
 // Maps from Supabase database fields to our frontend types
@@ -10,6 +9,7 @@ export const mapAlbumFromDB = (dbAlbum: any): Album => {
     coverUrl: dbAlbum.cover_url || "",
     createdAt: dbAlbum.created_at,
     itemCount: 0, // This will be calculated if needed elsewhere
+    userId: dbAlbum.user_id
   };
 };
 
