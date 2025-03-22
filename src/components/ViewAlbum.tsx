@@ -6,6 +6,7 @@ import { Download, Loader2, Share } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MediaItemActions from "@/components/MediaItemActions";
+import MediaCarousel from "@/components/MediaCarousel";
 import { supabase } from "@/integrations/supabase/client";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
@@ -40,6 +41,8 @@ const ViewAlbum: React.FC<ViewAlbumProps> = ({
   const [isCoverUpdating, setIsCoverUpdating] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isCarouselOpen, setIsCarouselOpen] = useState(false);
+  const [carouselInitialIndex, setCarouselInitialIndex] = useState(0);
   const { toast } = useToast();
 
   const handleDeleteItem = (itemId: string) => {
@@ -189,6 +192,15 @@ const ViewAlbum: React.FC<ViewAlbumProps> = ({
     setIsShareDialogOpen(false);
   };
 
+  const openCarousel = (index: number) => {
+    setCarouselInitialIndex(index);
+    setIsCarouselOpen(true);
+  };
+
+  const closeCarousel = () => {
+    setIsCarouselOpen(false);
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -216,8 +228,12 @@ const ViewAlbum: React.FC<ViewAlbumProps> = ({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-        {items.map((item) => (
-          <div key={item.id} className="group relative overflow-hidden bg-muted rounded-md border">
+        {items.map((item, index) => (
+          <div 
+            key={item.id} 
+            className="group relative overflow-hidden bg-muted rounded-md border cursor-pointer hover:opacity-95 transition-opacity"
+            onClick={() => openCarousel(index)}
+          >
             <AspectRatio ratio={1}>
               {item.type === "image" ? (
                 <img
@@ -230,23 +246,32 @@ const ViewAlbum: React.FC<ViewAlbumProps> = ({
                 <video
                   src={item.url}
                   className="object-cover w-full h-full"
-                  controls
                   muted
                   playsInline
+                  onClick={(e) => e.stopPropagation()}
                 />
               )}
             </AspectRatio>
             
-            <MediaItemActions 
-              item={item}
-              albumId={item.albumId}
-              isEditable={isEditable}
-              onSetAsCover={handleSetAsCover}
-              onDelete={handleDeleteItem}
-            />
+            <div onClick={(e) => e.stopPropagation()}>
+              <MediaItemActions 
+                item={item}
+                albumId={item.albumId}
+                isEditable={isEditable}
+                onSetAsCover={handleSetAsCover}
+                onDelete={handleDeleteItem}
+              />
+            </div>
           </div>
         ))}
       </div>
+
+      <MediaCarousel
+        items={items}
+        initialIndex={carouselInitialIndex}
+        isOpen={isCarouselOpen}
+        onClose={closeCarousel}
+      />
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
