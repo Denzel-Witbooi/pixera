@@ -1,5 +1,4 @@
 
-
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -34,7 +33,7 @@ export const formatFileSize = (bytes: number): string => {
 };
 
 /**
- * Check if a file is within size limits
+ * Check if a file is within size limit
  */
 export const isWithinSizeLimit = (file: File, maxSizeMB = 100): boolean => {
   return file.size <= maxSizeMB * 1024 * 1024;
@@ -48,3 +47,16 @@ export const deleteStorageFile = async (path: string, bucket = 'album_media'): P
   return !error;
 };
 
+/**
+ * Creates a temporary object URL for file preview
+ */
+export const createPreviewUrl = (file: File): string => {
+  return URL.createObjectURL(file);
+};
+
+/**
+ * Releases a previously created object URL to free memory
+ */
+export const revokePreviewUrl = (url: string): void => {
+  URL.revokeObjectURL(url);
+};
