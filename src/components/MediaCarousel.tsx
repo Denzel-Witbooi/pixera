@@ -12,6 +12,7 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { X, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MediaCarouselProps {
   items: MediaItem[];
@@ -28,6 +29,7 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const { toast } = useToast();
+  const { isMobile } = useIsMobile();
 
   useEffect(() => {
     if (isOpen) {
@@ -143,6 +145,8 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({
                       <video
                         src={item.url}
                         controls
+                        playsInline
+                        muted
                         className="w-full h-auto max-h-[80vh] object-contain mx-auto"
                       />
                     )}
