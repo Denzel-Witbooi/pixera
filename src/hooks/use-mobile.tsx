@@ -37,14 +37,30 @@ export function useIsMobile() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const isMobileValue = windowSize.width ? windowSize.width < BREAKPOINTS.mobile : false;
-  const isTabletValue = windowSize.width ? windowSize.width >= BREAKPOINTS.mobile && windowSize.width < BREAKPOINTS.laptop : false;
-  const isDesktopValue = windowSize.width ? windowSize.width >= BREAKPOINTS.laptop : true;
+  const isMobile = windowSize.width ? windowSize.width < BREAKPOINTS.mobile : false;
+  const isTablet = windowSize.width ? windowSize.width >= BREAKPOINTS.mobile && windowSize.width < BREAKPOINTS.laptop : false;
+  const isDesktop = windowSize.width ? windowSize.width >= BREAKPOINTS.laptop : true;
 
-  // This allows both ways of using the hook:
-  // 1. As a direct boolean: const isMobile = useIsMobile();
-  // 2. As an object with additional properties: const { isMobile, isTablet, ... } = useIsMobile();
-  const result = isMobileValue as unknown as boolean & {
+  // Create a proper object that includes all properties
+  const result = {
+    // This allows the hook to be used directly as a boolean check
+    valueOf: () => isMobile,
+    // These allow the hook to be destructured
+    isMobile,
+    isTablet,
+    isDesktop,
+    windowSize
+  };
+
+  // This allows the hook to be used directly in boolean contexts
+  // by implementing the toPrimitive method
+  Object.defineProperty(result, Symbol.toPrimitive, {
+    value: (hint: string) => {
+      return hint === 'number' ? Number(isMobile) : isMobile;
+    }
+  });
+
+  return result as unknown as boolean & {
     isMobile: boolean;
     isTablet: boolean;
     isDesktop: boolean;
@@ -53,12 +69,4 @@ export function useIsMobile() {
       height: number | undefined;
     };
   };
-
-  // Assign properties to the result
-  result.isMobile = isMobileValue;
-  result.isTablet = isTabletValue;
-  result.isDesktop = isDesktopValue;
-  result.windowSize = windowSize;
-
-  return result;
 }
