@@ -193,7 +193,7 @@ const AlbumPage = () => {
 
   return (
     <div className="min-h-screen bg-background animate-fade-in">
-      <Header openUploadModal={user ? openUploadModal : undefined} />
+      <Header />
       
       <main className="container max-w-7xl mx-auto px-4 pt-20 sm:pt-24 pb-12 sm:pb-16">
         <div className="mb-6 sm:mb-8">
