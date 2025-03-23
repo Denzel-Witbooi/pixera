@@ -142,7 +142,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
   return (
     <>
       <LoadingOverlay 
-        isLoading={uploadState.isUploading}
+        isLoading={uploadState.isLoading}
         progress={uploadState.progress}
         message={mode === "create-new" ? "Creating album..." : "Adding to album..."}
         completedItems={uploadState.completedUploads}
