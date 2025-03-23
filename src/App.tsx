@@ -36,6 +36,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Separate AppRoutes component to ensure hooks are used correctly
 const AppRoutes = () => (
   <Routes>
     <Route path="/auth" element={<Auth />} />
@@ -46,8 +47,10 @@ const AppRoutes = () => (
   </Routes>
 );
 
+// Make sure App is a proper React function component
 function App() {
   return (
+    // Ensure the QueryClientProvider is properly nested
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
