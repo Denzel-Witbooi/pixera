@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -17,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { createPreviewUrl, formatFileSize, getMediaType, isValidFileType, revokePreviewUrl } from "@/lib/storage-helpers";
 import { Card, CardContent } from "@/components/ui/card";
+import LoadingOverlay from "@/components/LoadingOverlay";
 
 interface MediaPreview {
   file: File;
@@ -38,10 +38,9 @@ const CreateAlbum = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
-  const { uploadToStorage } = useImageUpload();
+  const { uploadToStorage, uploadState } = useImageUpload();
 
   useEffect(() => {
-    // Redirect if not authenticated
     if (!user) {
       navigate("/auth");
       toast({
@@ -53,7 +52,6 @@ const CreateAlbum = () => {
   }, [user, navigate, toast]);
 
   useEffect(() => {
-    // Update previews when files change
     const newPreviews = files.map((file, index) => ({
       file,
       type: getMediaType(file),
@@ -63,12 +61,10 @@ const CreateAlbum = () => {
     
     setPreviews(newPreviews);
     
-    // If this is the first file, automatically select it as cover
     if (files.length > 0 && selectedCoverIndex === null) {
       setSelectedCoverIndex(0);
     }
     
-    // Clean up preview URLs when component unmounts or files change
     return () => {
       previews.forEach(preview => {
         revokePreviewUrl(preview.url);
@@ -134,20 +130,16 @@ const CreateAlbum = () => {
       revokePreviewUrl(removedPreview.url);
     }
     
-    // Update previews and files
     setPreviews(prev => prev.filter((_, i) => i !== index));
     setFiles(prev => prev.filter((_, i) => i !== index));
     
-    // If removing the selected cover, reset or choose new cover
     if (selectedCoverIndex === index) {
       if (files.length > 1) {
-        // Select another file as cover
         setSelectedCoverIndex(index === 0 ? 1 : 0);
       } else {
         setSelectedCoverIndex(null);
       }
     } else if (selectedCoverIndex !== null && selectedCoverIndex > index) {
-      // Adjust the index if a file before the cover was removed
       setSelectedCoverIndex(selectedCoverIndex - 1);
     }
   };
@@ -193,7 +185,6 @@ const CreateAlbum = () => {
         throw new Error("User not authenticated");
       }
       
-      // Create new album
       const { data: newAlbum, error: albumError } = await supabase
         .from("albums")
         .insert({
@@ -209,11 +200,9 @@ const CreateAlbum = () => {
         throw albumError || new Error("Failed to create album");
       }
       
-      // Upload files
       const mediaItems = await uploadToStorage(files, newAlbum.id);
       
       if (mediaItems.length > 0 && selectedCoverIndex !== null) {
-        // Set the selected image as cover
         const { error: updateError } = await supabase
           .from("albums")
           .update({ cover_url: mediaItems[selectedCoverIndex].url })
@@ -229,7 +218,6 @@ const CreateAlbum = () => {
         description: `Successfully created "${title}" with ${mediaItems.length} items.`
       });
       
-      // Clean up and redirect to the new album
       navigate(`/album/${newAlbum.id}`);
     } catch (error) {
       console.error("Failed to create album:", error);
@@ -243,17 +231,23 @@ const CreateAlbum = () => {
   };
 
   const handleCancel = () => {
-    // Clean up preview URLs
     previews.forEach(preview => {
       revokePreviewUrl(preview.url);
     });
     
-    // Navigate back to home
     navigate("/");
   };
 
   return (
     <div className="min-h-screen bg-background animate-fade-in">
+      <LoadingOverlay 
+        isLoading={isUploading || uploadState.isUploading}
+        progress={uploadState.progress}
+        message="Creating your album..."
+        completedItems={uploadState.completedUploads}
+        totalItems={uploadState.totalUploads}
+      />
+      
       <Header />
       
       <main className="container max-w-3xl mx-auto px-4 pt-24 pb-16">

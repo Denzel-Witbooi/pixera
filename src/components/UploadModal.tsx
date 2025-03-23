@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import { Album } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -20,6 +19,7 @@ import { Loader2, Upload, X, FileImage, FileVideo } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatFileSize, isValidFileType, isWithinSizeLimit } from "@/lib/storage-helpers";
+import LoadingOverlay from "@/components/LoadingOverlay";
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -55,14 +55,12 @@ const UploadModal: React.FC<UploadModalProps> = ({
   const handleFiles = (files: File[]) => {
     setError(null);
     
-    // Validate file types
     const invalidFiles = files.filter(file => !isValidFileType(file));
     if (invalidFiles.length > 0) {
       setError(`Invalid file type(s): ${invalidFiles.map(f => f.name).join(", ")}`);
       return;
     }
     
-    // Validate file sizes
     const oversizedFiles = files.filter(file => !isWithinSizeLimit(file));
     if (oversizedFiles.length > 0) {
       setError(`File(s) exceed size limit: ${oversizedFiles.map(f => f.name).join(", ")}`);
@@ -118,7 +116,6 @@ const UploadModal: React.FC<UploadModalProps> = ({
         selectedFiles
       );
       
-      // Reset form
       setAlbumTitle("");
       setAlbumDescription("");
       setSelectedFiles([]);
@@ -142,171 +139,97 @@ const UploadModal: React.FC<UploadModalProps> = ({
     : `Add photos and videos to "${initialAlbum?.title}".`;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
+    <>
+      <LoadingOverlay 
+        isLoading={uploadState.isUploading}
+        progress={uploadState.progress}
+        message={mode === "create-new" ? "Creating album..." : "Adding to album..."}
+        completedItems={uploadState.completedUploads}
+        totalItems={uploadState.totalUploads}
+      />
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {mode === "create-new" && (
-            <>
-              {/* Album info fields - only show when creating new album */}
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="title">Album Title</Label>
-                  <Input
-                    id="title"
-                    value={albumTitle}
-                    onChange={(e) => setAlbumTitle(e.target.value)}
-                    placeholder="Enter album title"
-                    className="mt-1"
-                    required
-                  />
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {mode === "create-new" && (
+              <>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="title">Album Title</Label>
+                    <Input
+                      id="title"
+                      value={albumTitle}
+                      onChange={(e) => setAlbumTitle(e.target.value)}
+                      placeholder="Enter album title"
+                      className="mt-1"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="description">Description (Optional)</Label>
+                    <Textarea
+                      id="description"
+                      value={albumDescription}
+                      onChange={(e) => setAlbumDescription(e.target.value)}
+                      placeholder="Enter album description"
+                      className="mt-1"
+                      rows={3}
+                    />
+                  </div>
                 </div>
                 
-                <div>
-                  <Label htmlFor="description">Description (Optional)</Label>
-                  <Textarea
-                    id="description"
-                    value={albumDescription}
-                    onChange={(e) => setAlbumDescription(e.target.value)}
-                    placeholder="Enter album description"
-                    className="mt-1"
-                    rows={3}
-                  />
-                </div>
+                <Separator />
+              </>
+            )}
+            
+            <div className="space-y-4">
+              <div
+                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                  dragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-muted-foreground/50"
+                }`}
+                onDragEnter={handleDrag}
+                onDragOver={handleDrag}
+                onDragLeave={handleDrag}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,video/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  disabled={uploadState.isUploading}
+                />
+                <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm font-medium mb-1">
+                  Drag and drop files here or click to browse
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Supports images and videos up to 100MB
+                </p>
               </div>
               
-              <Separator />
-            </>
-          )}
-          
-          {/* File upload section - show in both modes */}
-          <div className="space-y-4">
-            <div
-              className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-                dragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-muted-foreground/50"
-              }`}
-              onDragEnter={handleDrag}
-              onDragOver={handleDrag}
-              onDragLeave={handleDrag}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept="image/*,video/*"
-                onChange={handleFileChange}
-                className="hidden"
-                disabled={uploadState.isUploading}
-              />
-              <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm font-medium mb-1">
-                Drag and drop files here or click to browse
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Supports images and videos up to 100MB
-              </p>
-            </div>
-            
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            
-            {uploadState.isUploading && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium">Uploading media...</span>
-                  <span>
-                    {uploadState.completedUploads} of {uploadState.totalUploads} complete
-                  </span>
-                </div>
-                <Progress value={uploadState.progress} className="h-2" />
-              </div>
-            )}
-            
-            {selectedFiles.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium">
-                  {selectedFiles.length} file{selectedFiles.length !== 1 ? "s" : ""} selected
-                </p>
-                <div className="max-h-40 overflow-y-auto space-y-2 pr-2">
-                  {selectedFiles.map((file, index) => (
-                    <div
-                      key={`${file.name}-${index}`}
-                      className="flex items-center justify-between bg-muted/50 rounded-md p-2 text-sm"
-                    >
-                      <div className="flex items-center space-x-2 truncate">
-                        {file.type.startsWith("image/") ? (
-                          <FileImage className="h-4 w-4 text-blue-500" />
-                        ) : (
-                          <FileVideo className="h-4 w-4 text-purple-500" />
-                        )}
-                        <span className="truncate">{file.name}</span>
-                        <span className="text-muted-foreground text-xs">
-                          {formatFileSize(file.size)}
-                        </span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0 rounded-full"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeFile(index);
-                        }}
-                        disabled={uploadState.isUploading}
-                      >
-                        <X className="h-3 w-3" />
-                        <span className="sr-only">Remove file</span>
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={uploadState.isUploading}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={
-                uploadState.isUploading || 
-                selectedFiles.length === 0 || 
-                (mode === "create-new" && !albumTitle.trim())
-              }
-            >
-              {uploadState.isUploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {uploadState.completedUploads > 0 ? 
-                    `Uploading ${uploadState.completedUploads}/${uploadState.totalUploads}` : 
-                    `Uploading ${Math.round(uploadState.progress)}%`}
-                </>
-              ) : (
-                mode === "create-new" ? "Create Album" : "Add to Album"
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               )}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-};
+              
+              {uploadState.isUploading && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">Uploading media...</span>
+                    <span>
+                      {uploadState.completedUploads} of {uploadState.totalUploads} complete
+                    </span>
+                  </div>
+                  <Progress
 
-export default UploadModal;

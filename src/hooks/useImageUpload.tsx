@@ -81,7 +81,8 @@ export const useImageUpload = () => {
         // Update completed uploads count
         setUploadState(prev => ({
           ...prev,
-          completedUploads: prev.completedUploads + 1
+          completedUploads: prev.completedUploads + 1,
+          progress: Math.min(90, (prev.completedUploads + 1) / prev.totalUploads * 90)
         }));
         
         // Return in the format expected by database
@@ -107,13 +108,25 @@ export const useImageUpload = () => {
         throw error;
       }
       
-      setUploadState({
+      // Set progress to 100% when complete
+      setUploadState(prev => ({
+        ...prev,
         isUploading: false,
         progress: 100,
-        error: null,
         completedUploads: files.length,
         totalUploads: files.length
-      });
+      }));
+      
+      // After a short delay, reset the upload state
+      setTimeout(() => {
+        setUploadState({
+          isUploading: false,
+          progress: 0,
+          error: null,
+          completedUploads: 0,
+          totalUploads: 0
+        });
+      }, 1500);
       
       // Convert to MediaItem format for the frontend
       return dbMediaItems.map(mapMediaItemFromDB);
@@ -130,8 +143,19 @@ export const useImageUpload = () => {
     }
   }, [user]);
 
+  const resetUploadState = useCallback(() => {
+    setUploadState({
+      isUploading: false,
+      progress: 0,
+      error: null,
+      completedUploads: 0,
+      totalUploads: 0
+    });
+  }, []);
+
   return {
     uploadState,
-    uploadToStorage
+    uploadToStorage,
+    resetUploadState
   };
 };
