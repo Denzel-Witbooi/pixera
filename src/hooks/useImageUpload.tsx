@@ -11,9 +11,7 @@ export const useImageUpload = () => {
   const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
     progress: 0,
-    error: null,
-    completedUploads: 0,
-    totalUploads: 0
+    error: null
   });
   const { user } = useAuth();
 
@@ -36,9 +34,7 @@ export const useImageUpload = () => {
     setUploadState({
       isUploading: true,
       progress: 0,
-      error: null,
-      completedUploads: 0,
-      totalUploads: files.length
+      error: null
     });
 
     try {
@@ -78,13 +74,6 @@ export const useImageUpload = () => {
           .from("album_media")
           .getPublicUrl(filePath);
         
-        // Update completed uploads count
-        setUploadState(prev => ({
-          ...prev,
-          completedUploads: prev.completedUploads + 1,
-          progress: Math.min(90, (prev.completedUploads + 1) / prev.totalUploads * 90)
-        }));
-        
         // Return in the format expected by database
         return {
           id: fileId,
@@ -108,25 +97,11 @@ export const useImageUpload = () => {
         throw error;
       }
       
-      // Set progress to 100% when complete
-      setUploadState(prev => ({
-        ...prev,
+      setUploadState({
         isUploading: false,
         progress: 100,
-        completedUploads: files.length,
-        totalUploads: files.length
-      }));
-      
-      // After a short delay, reset the upload state
-      setTimeout(() => {
-        setUploadState({
-          isUploading: false,
-          progress: 0,
-          error: null,
-          completedUploads: 0,
-          totalUploads: 0
-        });
-      }, 1500);
+        error: null
+      });
       
       // Convert to MediaItem format for the frontend
       return dbMediaItems.map(mapMediaItemFromDB);
@@ -135,27 +110,14 @@ export const useImageUpload = () => {
       setUploadState({
         isUploading: false,
         progress: 0,
-        error: error instanceof Error ? error.message : "Failed to upload files",
-        completedUploads: 0,
-        totalUploads: 0
+        error: error instanceof Error ? error.message : "Failed to upload files"
       });
       throw error;
     }
   }, [user]);
 
-  const resetUploadState = useCallback(() => {
-    setUploadState({
-      isUploading: false,
-      progress: 0,
-      error: null,
-      completedUploads: 0,
-      totalUploads: 0
-    });
-  }, []);
-
   return {
     uploadState,
-    uploadToStorage,
-    resetUploadState
+    uploadToStorage
   };
 };
