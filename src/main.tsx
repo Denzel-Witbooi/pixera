@@ -5,4 +5,8 @@ import App from './App.tsx';
 import './index.css';
 
 const root = createRoot(document.getElementById("root")!);
-root.render(<App />);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
