@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from "react";
 import { Album } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -141,7 +142,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
   return (
     <>
       <LoadingOverlay 
-        isLoading={uploadState.isUploading}
+        isLoading={uploadState.isLoading}
         progress={uploadState.progress}
         message={mode === "create-new" ? "Creating album..." : "Adding to album..."}
         completedItems={uploadState.completedUploads}
@@ -231,5 +232,75 @@ const UploadModal: React.FC<UploadModalProps> = ({
                       {uploadState.completedUploads} of {uploadState.totalUploads} complete
                     </span>
                   </div>
-                  <Progress
+                  <Progress value={uploadState.progress} />
+                </div>
+              )}
+              
+              {selectedFiles.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">
+                    Selected Files ({selectedFiles.length})
+                  </div>
+                  <div className="grid gap-2 max-h-40 overflow-y-auto pr-2">
+                    {selectedFiles.map((file, index) => (
+                      <div 
+                        key={index} 
+                        className="flex items-center gap-2 bg-muted p-2 rounded"
+                      >
+                        {file.type.startsWith("image/") ? (
+                          <FileImage className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <FileVideo className="h-4 w-4 text-muted-foreground" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm truncate">{file.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {formatFileSize(file.size)}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeFile(index)}
+                          className="text-muted-foreground hover:text-destructive"
+                          disabled={uploadState.isUploading}
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={uploadState.isUploading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={uploadState.isUploading || selectedFiles.length === 0}
+              >
+                {uploadState.isUploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>Upload</>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
 
+export default UploadModal;
