@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { MediaItem } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -137,32 +138,44 @@ const ViewAlbum: React.FC<ViewAlbumProps> = ({
       
       if (!folder) throw new Error("Failed to create zip folder");
       
-      const imagePromises = items
-        .filter(item => item.type === "image")
-        .map(async (item, index) => {
-          try {
-            const response = await fetch(item.url);
-            const blob = await response.blob();
-            
-            const extension = item.url.split('.').pop() || 'jpg';
-            const fileName = `${item.title || `image-${index + 1}`}.${extension}`;
-            
-            folder.file(fileName, blob);
-            return true;
-          } catch (error) {
-            console.error(`Failed to download ${item.url}:`, error);
-            return false;
-          }
-        });
+      // Create separate folders for images and videos
+      const imageFolder = folder.folder("images");
+      const videoFolder = folder.folder("videos");
       
-      await Promise.all(imagePromises);
+      if (!imageFolder || !videoFolder) throw new Error("Failed to create media folders");
+      
+      const mediaPromises = items.map(async (item, index) => {
+        try {
+          const response = await fetch(item.url);
+          const blob = await response.blob();
+          
+          const extension = item.url.split('.').pop() || (item.type === 'image' ? 'jpg' : 'mp4');
+          const fileName = `${item.title || `${item.type}-${index + 1}`}.${extension}`;
+          
+          if (item.type === "image") {
+            imageFolder.file(fileName, blob);
+          } else if (item.type === "video") {
+            videoFolder.file(fileName, blob);
+          }
+          
+          return true;
+        } catch (error) {
+          console.error(`Failed to download ${item.url}:`, error);
+          return false;
+        }
+      });
+      
+      await Promise.all(mediaPromises);
       
       const content = await zip.generateAsync({ type: "blob" });
       saveAs(content, `${albumTitle || "album"}.zip`);
       
+      const imageCount = items.filter(item => item.type === "image").length;
+      const videoCount = items.filter(item => item.type === "video").length;
+      
       toast({
         title: "Download complete",
-        description: `${items.length} images have been downloaded.`
+        description: `${imageCount} images and ${videoCount} videos have been downloaded.`
       });
     } catch (error) {
       console.error("Failed to download album:", error);
