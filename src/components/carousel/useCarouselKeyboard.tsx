@@ -7,13 +7,15 @@ interface UseCarouselKeyboardProps {
   onClose: () => void;
   items: MediaItem[];
   setCurrentIndex: (index: number) => void;
+  currentIndex: number; // Add current index to track the current position
 }
 
 export const useCarouselKeyboard = ({
   isOpen,
   onClose,
   items,
-  setCurrentIndex
+  setCurrentIndex,
+  currentIndex
 }: UseCarouselKeyboardProps) => {
   useEffect(() => {
     if (isOpen) {
@@ -25,9 +27,13 @@ export const useCarouselKeyboard = ({
         if (e.key === "Escape") {
           onClose();
         } else if (e.key === "ArrowLeft") {
-          setCurrentIndex((prev) => (prev > 0 ? prev - 1 : items.length - 1));
+          // Calculate the new index directly instead of using a callback function
+          const newIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+          setCurrentIndex(newIndex);
         } else if (e.key === "ArrowRight") {
-          setCurrentIndex((prev) => (prev < items.length - 1 ? prev + 1 : 0));
+          // Calculate the new index directly instead of using a callback function
+          const newIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+          setCurrentIndex(newIndex);
         }
       };
       
@@ -37,5 +43,5 @@ export const useCarouselKeyboard = ({
         window.removeEventListener("keydown", handleKeyDown);
       };
     }
-  }, [isOpen, items.length, onClose, setCurrentIndex]);
+  }, [isOpen, items.length, onClose, setCurrentIndex, currentIndex]);
 };

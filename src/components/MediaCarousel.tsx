@@ -39,12 +39,13 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({
     setCurrentIndex(initialIndex);
   });
   
-  // Use our keyboard navigation hook
+  // Use our keyboard navigation hook with currentIndex
   useCarouselKeyboard({
     isOpen,
     onClose,
     items,
-    setCurrentIndex
+    setCurrentIndex,
+    currentIndex
   });
 
   if (!isOpen) return null;
