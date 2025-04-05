@@ -12,7 +12,7 @@ const Header: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, user, isPublicView } = useAuth();
+  const { signOut, user, isPublicView, isAdmin } = useAuth();
   const { isMobile } = useIsMobile();
   
   useEffect(() => {
@@ -73,8 +73,8 @@ const Header: React.FC = () => {
           Gallery
         </Link>
         
-        {/* Only show Create Album for authenticated users */}
-        {user && (
+        {/* Only show Create Album for admin users */}
+        {user && isAdmin && (
           <Button 
             onClick={handleCreateAlbum} 
             className="flex items-center space-x-2 bg-primary hover:bg-primary/90"
@@ -134,8 +134,8 @@ const Header: React.FC = () => {
               Gallery
             </Link>
             
-            {/* Only show Create Album for authenticated users */}
-            {user && (
+            {/* Only show Create Album for admin users */}
+            {user && isAdmin && (
               <Button 
                 onClick={handleCreateAlbum}
                 className="w-full flex items-center justify-center space-x-2 bg-primary hover:bg-primary/90"

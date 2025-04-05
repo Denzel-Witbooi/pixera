@@ -36,13 +36,27 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Admin-only route component
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, isLoading, isAdmin } = useAuth();
+  
+  if (isLoading) return null;
+  
+  // Only allow access if user is authenticated and has admin role
+  if (!user || !isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 // Separate AppRoutes component to ensure hooks are used correctly
 const AppRoutes = () => (
   <Routes>
     <Route path="/auth" element={<Auth />} />
     <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
     <Route path="/album/:id" element={<ProtectedRoute><Album /></ProtectedRoute>} />
-    <Route path="/create-album" element={<ProtectedRoute><CreateAlbum /></ProtectedRoute>} />
+    <Route path="/create-album" element={<AdminRoute><CreateAlbum /></AdminRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

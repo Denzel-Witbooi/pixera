@@ -17,7 +17,7 @@ const Index = () => {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const { user, isPublicView } = useAuth();
+  const { user, isPublicView, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
   const { albumsWithStats, isLoading: isStatsLoading } = useAlbumStats(albums);
@@ -76,7 +76,7 @@ const Index = () => {
               Create, share, and manage your media collections with ease.
             </p>
             
-            {user && (
+            {user && isAdmin && (
               <Button 
                 onClick={handleCreateAlbum}
                 className="mt-5 sm:mt-6 flex items-center space-x-2"
@@ -94,7 +94,7 @@ const Index = () => {
                 size={isMobile ? "sm" : "default"}
               >
                 <LogIn className="w-4 h-4" />
-                <span>Sign in to create albums</span>
+                <span>Sign in to view albums</span>
               </Button>
             )}
           </div>

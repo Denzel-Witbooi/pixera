@@ -5,11 +5,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 
+type UserWithRole = User & {
+  role?: string;
+};
+
 type AuthContextType = {
   session: Session | null;
-  user: User | null;
+  user: UserWithRole | null;
   isLoading: boolean;
   isPublicView: boolean;
+  isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -21,10 +26,34 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserWithRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPublicView, setIsPublicView] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
+
+  // Fetch user role from profiles table
+  const fetchUserRole = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching user role:', error);
+        return;
+      }
+      
+      if (data) {
+        setUser(prev => prev ? { ...prev, role: data.role } : null);
+        setIsAdmin(data.role === 'admin');
+      }
+    } catch (error) {
+      console.error('Error in fetchUserRole:', error);
+    }
+  };
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -37,6 +66,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Reset public view mode when user logs in
         if (newSession) {
           setIsPublicView(false);
+          
+          // Fetch the user's role when authentication state changes
+          fetchUserRole(newSession.user.id);
+        } else {
+          setIsAdmin(false);
         }
       }
     );
@@ -45,6 +79,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
+      
+      // If user is logged in, fetch their role
+      if (currentSession?.user) {
+        fetchUserRole(currentSession.user.id);
+      }
+      
       setIsLoading(false);
       
       // If no user is logged in, automatically enable public view
@@ -139,6 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       user, 
       isLoading, 
       isPublicView,
+      isAdmin,
       signIn, 
       signUp, 
       signOut,
