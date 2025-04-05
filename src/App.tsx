@@ -50,6 +50,24 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Make sure App is a proper React function component
+function App() {
+  return (
+    // Ensure the QueryClientProvider is properly nested
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <AppRoutes />
+            <Toaster />
+            <Sonner />
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
+
 // Separate AppRoutes component to ensure hooks are used correctly
 const AppRoutes = () => (
   <Routes>
@@ -60,23 +78,5 @@ const AppRoutes = () => (
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
-
-// Make sure App is a proper React function component
-function App() {
-  return (
-    // Ensure the QueryClientProvider is properly nested
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <BrowserRouter>
-          <AuthProvider>
-            <Toaster />
-            <Sonner />
-            <AppRoutes />
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
-}
 
 export default App;

@@ -46,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       
-      if (data) {
+      if (data && data.role) {
         setUser(prev => prev ? { ...prev, role: data.role } : null);
         setIsAdmin(data.role === 'admin');
       }
