@@ -70,7 +70,7 @@ const Index = () => {
               Communications Department
             </span>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight mb-3 sm:mb-4 text-balance">
-              VodaPix Gallery
+              Pixera Gallery
             </h1>
             <p className="text-base sm:text-lg text-muted-foreground text-balance">
               Create, share, and manage your media collections with ease.

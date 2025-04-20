@@ -84,7 +84,7 @@ const Auth = () => {
           <div className="flex justify-center mb-2">
             <Image className="w-12 h-12 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold">VodaPix Gallery</h1>
+          <h1 className="text-2xl font-bold">Pixera Gallery</h1>
           <p className="text-muted-foreground mt-2">
             Sign in to upload and manage your media collections
           </p>
