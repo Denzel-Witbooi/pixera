@@ -56,8 +56,11 @@ const Header: React.FC = () => {
     >
       <div className="flex items-center">
         <Link to="/" className="flex items-center space-x-2">
-          <ImageIcon className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
-          <span className="text-lg sm:text-xl font-medium">VodaPix</span>
+          <img 
+                        src="/logoipsum-custom-logo.svg" 
+                        alt="Logo" 
+                        className="h-10" 
+                      />
         </Link>
       </div>
       
