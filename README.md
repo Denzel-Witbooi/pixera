@@ -1,69 +1,52 @@
-# Welcome to your Lovable project
+# 📸 Pixera – Event Media Sharing Platform
 
-## Project info
+**Pixera** is a modern web application built for organizations that need a clean, efficient way to upload, manage, and share event images and videos. Built with scalability and speed in mind, Pixera is perfect for internal communications teams, event managers, or anyone needing a robust media-sharing solution.
 
-**URL**: https://lovable.dev/projects/b22f4e44-8942-410b-95d8-f7ebd3200459
+## 🌐 Live Preview  
+> _[Coming Soon]
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 🧩 Features
 
-**Use Lovable**
+- ✅ Bulk photo and video uploads
+- 📂 Create and manage albums
+- 🌐 Shareable URLs for public or private albums
+- 💾 Download albums as ZIP archives
+- 👁️ Image preview and fullscreen modal
+- 🔒 Login/authentication (via Supabase)
+- 🌈 Clean, modern UI using `shadcn/ui` + Tailwind CSS
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/b22f4e44-8942-410b-95d8-f7ebd3200459) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🧠 Use Case Example
 
-**Use your preferred IDE**
+> Designed for communications departments who attend multiple events and need to organize, store, and share visual media internally or with the public — without the clutter of cloud drives or messaging apps.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 💻 Tech Stack
 
-Follow these steps:
+- ⚡ **Vite** — lightning-fast dev environment  
+- ⚛️ **React + TypeScript** — modern, type-safe frontend  
+- 💅 **Tailwind CSS + shadcn/ui** — elegant, responsive UI components  
+- 🛠️ **Supabase** — real-time backend with storage, auth, and database
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+---
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 📸 Screenshots
 
-# Step 3: Install the necessary dependencies.
-npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+### 🔐 Login Page  
+![Login](/public/lovable-uploads/login.png)
 
-**Edit a file directly in GitHub**
+### 🏠 Home Page / Dashboard  
+![Home](/public/lovable-uploads/thumbnail.png)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### 🖼️ Image Preview & Album View  
+![Preview](/public/lovable-uploads/preview.png)
 
-**Use GitHub Codespaces**
+### 📁 Create Album Interface  
+![Create Album](/public/lovable-uploads/album-create.png)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/b22f4e44-8942-410b-95d8-f7ebd3200459) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+---
