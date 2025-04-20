@@ -14,16 +14,16 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 20% 10%;
 
-    --primary: 210 100% 52%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 260 60% 50%; /* Brand color primary */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 96%;
+    --secondary: 260 60% 70%; /* Brand light color */
     --secondary-foreground: 220 20% 10%;
 
-    --muted: 210 20% 96%;
+    --muted: 260 60% 80%; /* Brand lighter color */
     --muted-foreground: 220 15% 40%;
 
-    --accent: 210 20% 96%;
+    --accent: 260 60% 90%;
     --accent-foreground: 220 20% 10%;
 
     --destructive: 0 84% 60%;
@@ -31,9 +31,14 @@
 
     --border: 220 13% 90%;
     --input: 220 13% 90%;
-    --ring: 210 100% 52%;
-
+    --ring: 260 60% 50%; /* Same as primary */
+    
     --radius: 0.75rem;
+    
+    --brand: 260 60% 50%;
+    --brand-light: 260 60% 70%;
+    --brand-lighter: 260 60% 80%;
+    --brand-foreground: 0 0% 100%;
   }
 
   .dark {
@@ -46,16 +51,16 @@
     --popover: 224 71% 4%;
     --popover-foreground: 210 20% 98%;
 
-    --primary: 210 100% 52%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 260 60% 50%; /* Brand color primary */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 27% 16%;
+    --secondary: 260 60% 40%; /* Darker brand light color for dark mode */
     --secondary-foreground: 210 20% 98%;
 
-    --muted: 215 27% 16%;
+    --muted: 260 60% 30%;
     --muted-foreground: 217 10% 64%;
 
-    --accent: 215 27% 16%;
+    --accent: 260 60% 20%;
     --accent-foreground: 210 20% 98%;
 
     --destructive: 0 62% 30%;
@@ -63,7 +68,12 @@
 
     --border: 215 27% 16%;
     --input: 215 27% 16%;
-    --ring: 210 100% 52%;
+    --ring: 260 60% 50%; /* Same as primary */
+    
+    --brand: 260 60% 50%;
+    --brand-light: 260 60% 70%;
+    --brand-lighter: 260 60% 80%;
+    --brand-foreground: 0 0% 100%;
   }
 }
 
