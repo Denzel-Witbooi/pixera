@@ -60,3 +60,19 @@ export const createPreviewUrl = (file: File): string => {
 export const revokePreviewUrl = (url: string): void => {
   URL.revokeObjectURL(url);
 };
+
+/**
+ * Returns a CDN-resized thumbnail URL using Supabase Image Transformation.
+ * Only applies to images stored in Supabase Storage — videos are returned unchanged.
+ * The transformed image is served as WebP and cached at the Supabase CDN edge.
+ *
+ * @param url   The original public Supabase Storage URL
+ * @param width Target width in pixels (default 400 — suitable for grid thumbnails)
+ */
+export const getThumbUrl = (url: string, width = 400): string => {
+  if (!url) return url;
+  // Only transform Supabase storage object URLs (not external or video blob URLs)
+  if (!url.includes('/object/public/')) return url;
+  return url.replace('/object/public/', '/render/image/public/') +
+    `?width=${width}&quality=75&resize=cover`;
+};

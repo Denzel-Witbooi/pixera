@@ -3,6 +3,7 @@ import React from "react";
 import { MediaItem } from "@/lib/types";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import MediaItemActions from "@/components/MediaItemActions";
+import { getThumbUrl } from "@/lib/storage-helpers";
 
 interface MediaGridProps {
   items: MediaItem[];
@@ -30,7 +31,7 @@ const MediaGrid: React.FC<MediaGridProps> = ({
           <AspectRatio ratio={1}>
             {item.type === "image" ? (
               <img
-                src={item.url}
+                src={getThumbUrl(item.url, 400)}
                 alt={item.title || "Album image"}
                 className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
                 loading="lazy"

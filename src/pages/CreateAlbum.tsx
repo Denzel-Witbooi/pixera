@@ -11,8 +11,8 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { X, Upload, Image as ImageIcon, Film, Check } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdapter } from "@/contexts/AdapterContext";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { createPreviewUrl, formatFileSize, getMediaType, isValidFileType, revokePreviewUrl } from "@/lib/storage-helpers";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,6 +38,7 @@ const CreateAlbum = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const adapter = useAdapter();
   const { uploadToStorage, uploadState } = useImageUpload();
 
   useEffect(() => {
@@ -184,31 +185,23 @@ const CreateAlbum = () => {
       if (!user) {
         throw new Error("User not authenticated");
       }
-      
-      const { data: newAlbum, error: albumError } = await supabase
-        .from("albums")
-        .insert({
-          title,
-          description: description || "",
-          created_at: new Date().toISOString(),
-          user_id: user.id
-        })
-        .select()
-        .single();
-      
-      if (albumError || !newAlbum) {
-        throw albumError || new Error("Failed to create album");
-      }
-      
+
+      const albumId = uuidv4();
+      const newAlbum = await adapter.createAlbum({
+        id: albumId,
+        title,
+        description: description || "",
+        coverUrl: "",
+        userId: user.id,
+        createdAt: new Date().toISOString(),
+      });
+
       const mediaItems = await uploadToStorage(files, newAlbum.id);
-      
+
       if (mediaItems.length > 0 && selectedCoverIndex !== null) {
-        const { error: updateError } = await supabase
-          .from("albums")
-          .update({ cover_url: mediaItems[selectedCoverIndex].url })
-          .eq("id", newAlbum.id);
-        
-        if (updateError) {
+        try {
+          await adapter.updateAlbumCover(newAlbum.id, mediaItems[selectedCoverIndex].url);
+        } catch (updateError) {
           console.error("Error updating album cover:", updateError);
         }
       }

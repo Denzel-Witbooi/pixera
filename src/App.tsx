@@ -6,17 +6,25 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { AdapterProvider } from "@/contexts/AdapterContext";
+import { createAdapter, type BackendType } from "@/lib/adapter";
 import Index from "./pages/Index";
 import Album from "./pages/Album";
 import Auth from "./pages/Auth";
 import CreateAlbum from "./pages/CreateAlbum";
 import NotFound from "./pages/NotFound";
 
+// ── Single decision point for backend selection ───────────────────────────────
+const backend: BackendType =
+  import.meta.env.VITE_USE_LOCAL_DATA === "true" ? "local" : "supabase";
+const adapter = createAdapter(backend);
+
 // Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000,   // 5 minutes — data considered fresh
+      gcTime: 30 * 60 * 1000,     // 30 minutes — keep unused data in cache
       retry: 1,
     },
   },
@@ -55,15 +63,17 @@ function App() {
   return (
     // Ensure the QueryClientProvider is properly nested
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <BrowserRouter>
-          <AuthProvider>
-            <AppRoutes />
-            <Toaster />
-            <Sonner />
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AdapterProvider adapter={adapter}>
+        <TooltipProvider>
+          <BrowserRouter>
+            <AuthProvider backend={backend}>
+              <AppRoutes />
+              <Toaster />
+              <Sonner />
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AdapterProvider>
     </QueryClientProvider>
   );
 }

@@ -4,6 +4,8 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
+import { MOCK_USER_ID } from "@/lib/mock-data";
+import type { BackendType } from "@/lib/adapter";
 
 type UserWithRole = User & {
   role?: string;
@@ -24,7 +26,46 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// ── Local mock user (bypasses Supabase when VITE_USE_LOCAL_DATA=true) ──────────
+
+const MOCK_USER: UserWithRole = {
+  id: MOCK_USER_ID,
+  email: "admin@test.local",
+  role: "admin",
+  app_metadata: {},
+  user_metadata: {},
+  aud: "authenticated",
+  created_at: "2026-01-01T00:00:00.000Z",
+};
+
+const LocalAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isPublicView, setIsPublicView] = useState(false);
+
+  const noOp = async () => {};
+
+  return (
+    <AuthContext.Provider
+      value={{
+        session: null,
+        user: MOCK_USER,
+        isLoading: false,
+        isPublicView,
+        isAdmin: true,
+        signIn: noOp,
+        signUp: noOp,
+        signOut: async () => setIsPublicView(true),
+        switchToPublicView: () => setIsPublicView(true),
+        switchToAuthView: () => setIsPublicView(false),
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+// ── Supabase auth provider (production) ───────────────────────────────────────
+
+const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<UserWithRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,62 +73,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
 
-  // Fetch user role from profiles table
   const fetchUserRole = async (userId: string) => {
     try {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', userId)
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
         .single();
-      
+
       if (error) {
-        console.error('Error fetching user role:', error);
+        console.error("Error fetching user role:", error);
         return;
       }
-      
+
       if (data && data.role) {
-        setUser(prev => prev ? { ...prev, role: data.role } : null);
-        setIsAdmin(data.role === 'admin');
+        setUser((prev) => (prev ? { ...prev, role: data.role } : null));
+        setIsAdmin(data.role === "admin");
       }
     } catch (error) {
-      console.error('Error in fetchUserRole:', error);
+      console.error("Error in fetchUserRole:", error);
     }
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
-        console.log("Auth state changed:", event);
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-        
-        // Reset public view mode when user logs in
-        if (newSession) {
-          setIsPublicView(false);
-          
-          // Fetch the user's role when authentication state changes
-          fetchUserRole(newSession.user.id);
-        } else {
-          setIsAdmin(false);
-        }
-      }
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, newSession) => {
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
 
-    // THEN check for existing session
+      if (newSession) {
+        setIsPublicView(false);
+        fetchUserRole(newSession.user.id);
+      } else {
+        setIsAdmin(false);
+      }
+    });
+
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
-      
-      // If user is logged in, fetch their role
+
       if (currentSession?.user) {
         fetchUserRole(currentSession.user.id);
       }
-      
+
       setIsLoading(false);
-      
-      // If no user is logged in, automatically enable public view
+
       if (!currentSession) {
         setIsPublicView(true);
       }
@@ -99,10 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
     } catch (error: any) {
       toast({
         title: "Sign in failed",
@@ -115,21 +144,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signUp({ 
-        email, 
+      const { error } = await supabase.auth.signUp({
+        email,
         password,
-        options: {
-          emailRedirectTo: window.location.origin
-        }
+        options: { emailRedirectTo: window.location.origin },
       });
-      
-      if (error) {
-        throw error;
-      }
-      
+      if (error) throw error;
       toast({
         title: "Sign up successful",
-        description: "Please check your email to confirm your account."
+        description: "Please check your email to confirm your account.",
       });
     } catch (error: any) {
       toast({
@@ -144,10 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
     } catch (error: any) {
       toast({
         title: "Sign out failed",
@@ -155,14 +175,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         variant: "destructive",
       });
     }
-  };
-
-  const switchToPublicView = () => {
-    setIsPublicView(true);
-  };
-
-  const switchToAuthView = () => {
-    setIsPublicView(false);
   };
 
   if (isLoading) {
@@ -174,22 +186,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   return (
-    <AuthContext.Provider value={{ 
-      session, 
-      user, 
-      isLoading, 
-      isPublicView,
-      isAdmin,
-      signIn, 
-      signUp, 
-      signOut,
-      switchToPublicView,
-      switchToAuthView
-    }}>
+    <AuthContext.Provider
+      value={{
+        session,
+        user,
+        isLoading,
+        isPublicView,
+        isAdmin,
+        signIn,
+        signUp,
+        signOut,
+        switchToPublicView: () => setIsPublicView(true),
+        switchToAuthView: () => setIsPublicView(false),
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
+
+// ── Exported provider — picks the right implementation ────────────────────────
+
+export const AuthProvider: React.FC<{ backend: BackendType; children: React.ReactNode }> = ({
+  backend,
+  children,
+}) =>
+  backend === "local" ? (
+    <LocalAuthProvider>{children}</LocalAuthProvider>
+  ) : (
+    <SupabaseAuthProvider>{children}</SupabaseAuthProvider>
+  );
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
