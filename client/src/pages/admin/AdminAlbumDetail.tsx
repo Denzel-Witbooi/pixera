@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
-const API_URL = import.meta.env.VITE_API_URL as string;
+const API_URL = (import.meta.env.VITE_API_URL as string) ?? "http://localhost:5000";
 
 // ── Per-file upload queue ──────────────────────────────────────────────────────
 

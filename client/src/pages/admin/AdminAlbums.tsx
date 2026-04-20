@@ -241,11 +241,11 @@ const AdminAlbums: React.FC = () => {
 
               {/* Actions */}
               <div className="flex items-center gap-1 flex-shrink-0">
-                <Link to={`/admin/albums/${album.id}`}>
-                  <Button variant="ghost" size="icon" title="Manage media">
+                <Button variant="ghost" size="icon" title="Manage media" asChild>
+                  <Link to={`/admin/albums/${album.id}`}>
                     <Images className="h-4 w-4" />
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"

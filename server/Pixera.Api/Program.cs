@@ -42,8 +42,18 @@ else
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddCors(options =>
+    options.AddDefaultPolicy(policy =>
+        policy
+            .WithOrigins(
+                "http://localhost:8080",
+                "http://localhost:5173")   // Vite defaults
+            .AllowAnyHeader()
+            .AllowAnyMethod()));
+
 var app = builder.Build();
 
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
