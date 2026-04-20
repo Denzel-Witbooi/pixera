@@ -86,7 +86,7 @@ const AppRoutes = () => (
   <Routes>
     {/* Public gallery — no auth */}
     <Route path="/gallery" element={<GalleryHome />} />
-    <Route path="/gallery/:id/:slug" element={<GalleryAlbum />} />
+    <Route path="/gallery/:id" element={<GalleryAlbum />} />
     <Route path="/gallery/not-found" element={<GalleryNotFound />} />
 
     {/* Legacy authenticated routes */}

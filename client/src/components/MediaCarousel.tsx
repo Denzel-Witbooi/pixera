@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { MediaItem } from "@/lib/types";
 import {
   Carousel,
@@ -6,6 +6,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
 import CarouselControls from "@/components/carousel/CarouselControls";
 import MediaDisplay from "@/components/carousel/MediaDisplay";
@@ -27,12 +28,31 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({
   albumTitle = "album",
   onClose,
 }) => {
-  const { currentIndex, setCurrentIndex, handleDownload, handleDownloadAll } =
-    useCarouselDownload(items);
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const apiRef = useRef<CarouselApi>(null);
+  // Prevents the scroll effect from re-firing when Embla itself triggered the index change
+  const emblaDidScroll = useRef(false);
 
-  useState(() => {
-    setCurrentIndex(initialIndex);
-  });
+  const { handleDownload, handleDownloadAll } = useCarouselDownload(items, currentIndex);
+
+  const handleSetApi = useCallback((api: CarouselApi) => {
+    if (!api) return;
+    apiRef.current = api;
+    api.scrollTo(initialIndex, true);
+    api.on("select", () => {
+      emblaDidScroll.current = true;
+      setCurrentIndex(api.selectedScrollSnap());
+    });
+  }, [initialIndex]);
+
+  // Sync keyboard navigation → Embla (skip when Embla itself changed the index)
+  useEffect(() => {
+    if (emblaDidScroll.current) {
+      emblaDidScroll.current = false;
+      return;
+    }
+    apiRef.current?.scrollTo(currentIndex);
+  }, [currentIndex]);
 
   useCarouselKeyboard({ isOpen, onClose, items, setCurrentIndex, currentIndex });
 
@@ -50,7 +70,7 @@ const MediaCarousel: React.FC<MediaCarouselProps> = ({
         <Carousel
           className="w-full"
           opts={{ align: "center", loop: true }}
-          setApi={(api) => { if (api) api.scrollTo(currentIndex); }}
+          setApi={handleSetApi}
         >
           <CarouselContent>
             {items.map((item, index) => (

@@ -187,6 +187,7 @@ const CreateAlbum = () => {
       }
 
       const albumId = uuidv4();
+      const slug = title.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
       const newAlbum = await adapter.createAlbum({
         id: albumId,
         title,
@@ -194,6 +195,7 @@ const CreateAlbum = () => {
         coverUrl: "",
         userId: user.id,
         createdAt: new Date().toISOString(),
+        slug,
       });
 
       const mediaItems = await uploadToStorage(files, newAlbum.id);

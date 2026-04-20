@@ -11,7 +11,7 @@ import { buildAlbumZip } from "@/lib/buildAlbumZip";
 import { useToast } from "@/components/ui/use-toast";
 
 const GalleryAlbum = () => {
-  const { id } = useParams<{ id: string; slug: string }>();
+  const { id } = useParams<{ id: string }>();
   const adapter = useAdapter();
   const { toast } = useToast();
 
@@ -43,7 +43,7 @@ const GalleryAlbum = () => {
       const blob = await zip.generateAsync({ type: "blob" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = `${album?.slug ?? "album"}.zip`;
+      link.download = `${album?.title ?? "album"}.zip`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
