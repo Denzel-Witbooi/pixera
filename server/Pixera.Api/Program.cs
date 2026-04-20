@@ -1,4 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Minio;
+using Minio.DataModel.Args;
+using Minio.Exceptions;
 using Pixera.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,6 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default"))
            .UseSnakeCaseNamingConvention());
+
+var minioCfg = builder.Configuration.GetSection("MinIO");
+builder.Services.AddMinio(opts => opts
+    .WithEndpoint(minioCfg["Endpoint"]!)
+    .WithCredentials(minioCfg["AccessKey"]!, minioCfg["SecretKey"]!)
+    .WithSSL(minioCfg.GetValue<bool>("UseSSL")));
 
 var app = builder.Build();
 
@@ -70,6 +79,37 @@ app.MapGet("/api/albums/{id:guid}/media", async (Guid id, AppDbContext db) =>
     return Results.Ok(media);
 });
 
+app.MapGet("/api/storage/{bucket}/{*objectPath}", async (string bucket, string objectPath, IMinioClient minio) =>
+{
+    try
+    {
+        var stream = new MemoryStream();
+        await minio.GetObjectAsync(new GetObjectArgs()
+            .WithBucket(bucket)
+            .WithObject(objectPath)
+            .WithCallbackStream((s, _) => s.CopyToAsync(stream)));
+
+        stream.Position = 0;
+        var contentType = GetContentType(objectPath);
+        return Results.Stream(stream, contentType);
+    }
+    catch (ObjectNotFoundException)
+    {
+        return Results.NotFound();
+    }
+});
+
 app.Run();
+
+static string GetContentType(string path) => Path.GetExtension(path).ToLowerInvariant() switch
+{
+    ".jpg" or ".jpeg" => "image/jpeg",
+    ".png"            => "image/png",
+    ".gif"            => "image/gif",
+    ".webp"           => "image/webp",
+    ".mp4"            => "video/mp4",
+    ".mov"            => "video/quicktime",
+    _                 => "application/octet-stream",
+};
 
 public partial class Program { }

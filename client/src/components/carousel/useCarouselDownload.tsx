@@ -1,9 +1,7 @@
-
 import { useState } from "react";
 import { MediaItem } from "@/lib/types";
 import { useToast } from "@/components/ui/use-toast";
-
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+import { buildAlbumZip } from "@/lib/buildAlbumZip";
 
 export const useCarouselDownload = (items: MediaItem[]) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -16,70 +14,42 @@ export const useCarouselDownload = (items: MediaItem[]) => {
     try {
       const response = await fetch(currentItem.url);
       const blob = await response.blob();
+      const ext = currentItem.url.split(".").pop()?.split("?")[0] ?? "jpg";
+      const fileName = `${currentItem.title || `image-${currentIndex + 1}`}.${ext}`;
 
-      const downloadLink = document.createElement("a");
-      downloadLink.href = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 
-      const extension = currentItem.url.split(".").pop() || "jpg";
-      const fileName = `${currentItem.title || `image-${currentIndex + 1}`}.${extension}`;
-      downloadLink.download = fileName;
-
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
-
-      // Release object URL after a tick to allow the browser to start the download
-      setTimeout(() => URL.revokeObjectURL(downloadLink.href), 1000);
-
-      toast({
-        title: "Download started",
-        description: "Your media file is being downloaded.",
-      });
-    } catch (error) {
-      console.error("Failed to download:", error);
-      toast({
-        title: "Download failed",
-        description: "There was an error downloading the file. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Download started", description: "Your file is downloading." });
+    } catch {
+      toast({ title: "Download failed", description: "Please try again.", variant: "destructive" });
     }
   };
 
-  /** Download every item in the carousel sequentially with a 150 ms gap
-   *  to avoid hammering Supabase Storage and hitting rate limits. */
-  const handleDownloadAll = async (onProgress?: (done: number, total: number) => void) => {
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      try {
-        const response = await fetch(item.url);
-        const blob = await response.blob();
+  const handleDownloadAll = async (albumTitle = "album") => {
+    toast({ title: "Building ZIP…", description: `Packaging ${items.length} files.` });
+    try {
+      const zip = await buildAlbumZip(items);
+      const blob = await zip.generateAsync({ type: "blob" });
 
-        const downloadLink = document.createElement("a");
-        downloadLink.href = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `${albumTitle}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 
-        const extension = item.url.split(".").pop() || "jpg";
-        downloadLink.download = `${item.title || `${item.type}-${i + 1}`}.${extension}`;
-
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-
-        setTimeout(() => URL.revokeObjectURL(downloadLink.href), 1000);
-
-        onProgress?.(i + 1, items.length);
-
-        // Brief pause between requests — keeps us well under storage rate limits
-        if (i < items.length - 1) await delay(150);
-      } catch (error) {
-        console.error(`Failed to download item ${i}:`, error);
-      }
+      toast({ title: "Download ready", description: "Your ZIP archive is downloading." });
+    } catch {
+      toast({ title: "ZIP failed", description: "Could not build the archive.", variant: "destructive" });
     }
   };
 
-  return {
-    currentIndex,
-    setCurrentIndex,
-    handleDownload,
-    handleDownloadAll,
-  };
+  return { currentIndex, setCurrentIndex, handleDownload, handleDownloadAll };
 };

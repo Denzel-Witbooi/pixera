@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Minio;
+using Minio.DataModel.Args;
 using Pixera.Api.Data;
 
 namespace Pixera.Api.Tests.Infrastructure;
@@ -42,5 +44,38 @@ public class PixeraWebFactory : WebApplicationFactory<Program>
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await db.Database.MigrateAsync();
+    }
+
+    public async Task EnsureMinioTestBucketAsync()
+    {
+        using var scope = Services.CreateScope();
+        var minio = scope.ServiceProvider.GetRequiredService<IMinioClient>();
+        var bucket = "pixera-test";
+
+        var exists = await minio.BucketExistsAsync(new BucketExistsArgs().WithBucket(bucket));
+        if (!exists)
+            await minio.MakeBucketAsync(new MakeBucketArgs().WithBucket(bucket));
+    }
+
+    public async Task PutTestObjectAsync(string bucket, string objectPath, byte[] content, string contentType = "image/jpeg")
+    {
+        using var scope = Services.CreateScope();
+        var minio = scope.ServiceProvider.GetRequiredService<IMinioClient>();
+        using var stream = new MemoryStream(content);
+        await minio.PutObjectAsync(new PutObjectArgs()
+            .WithBucket(bucket)
+            .WithObject(objectPath)
+            .WithStreamData(stream)
+            .WithObjectSize(content.Length)
+            .WithContentType(contentType));
+    }
+
+    public async Task RemoveTestObjectAsync(string bucket, string objectPath)
+    {
+        using var scope = Services.CreateScope();
+        var minio = scope.ServiceProvider.GetRequiredService<IMinioClient>();
+        await minio.RemoveObjectAsync(new RemoveObjectArgs()
+            .WithBucket(bucket)
+            .WithObject(objectPath));
     }
 }
