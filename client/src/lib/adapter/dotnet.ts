@@ -51,8 +51,13 @@ export class DotNetAdapter implements DataAdapter {
     if (!res.ok) throw new Error(`DELETE /api/admin/albums/${id} failed: ${res.status}`);
   }
 
-  updateAlbumCover(_albumId: string, _coverUrl: string): Promise<void> {
-    throw new Error("Not implemented");
+  async updateAlbumCover(albumId: string, coverUrl: string): Promise<void> {
+    const res = await fetch(`${this.baseUrl}/api/admin/albums/${albumId}/cover`, {
+      method: "PATCH",
+      headers: this.authHeaders(),
+      body: JSON.stringify({ coverUrl }),
+    });
+    if (!res.ok) throw new Error(`PATCH /api/admin/albums/${albumId}/cover failed: ${res.status}`);
   }
 
   async fetchMedia(albumId: string): Promise<MediaItem[]> {
@@ -65,15 +70,44 @@ export class DotNetAdapter implements DataAdapter {
     throw new Error("Not implemented");
   }
 
-  insertMedia(_items: MediaItem[]): Promise<void> {
-    throw new Error("Not implemented");
+  async insertMedia(items: MediaItem[]): Promise<void> {
+    for (const item of items) {
+      const res = await fetch(`${this.baseUrl}/api/admin/albums/${item.albumId}/media`, {
+        method: "POST",
+        headers: this.authHeaders(),
+        body: JSON.stringify({
+          url: item.url,
+          type: item.type,
+          title: item.title,
+          description: item.description,
+        }),
+      });
+      if (!res.ok) throw new Error(`POST /api/admin/albums/${item.albumId}/media failed: ${res.status}`);
+    }
   }
 
-  deleteMedia(_id: string): Promise<void> {
-    throw new Error("Not implemented");
+  async deleteMedia(id: string): Promise<void> {
+    const res = await fetch(`${this.baseUrl}/api/admin/media/${id}`, {
+      method: "DELETE",
+      headers: this.authHeaders(),
+    });
+    if (!res.ok) throw new Error(`DELETE /api/admin/media/${id} failed: ${res.status}`);
   }
 
-  uploadFile(_file: File, _path: string): Promise<string> {
-    throw new Error("Not implemented");
+  async uploadFile(file: File, albumId: string): Promise<string> {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("albumId", albumId);
+    const headers: HeadersInit = keycloak.token
+      ? { Authorization: `Bearer ${keycloak.token}` }
+      : {};
+    const res = await fetch(`${this.baseUrl}/api/admin/storage/upload`, {
+      method: "POST",
+      headers,
+      body: form,
+    });
+    if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+    const { url } = await res.json();
+    return url as string;
   }
 }

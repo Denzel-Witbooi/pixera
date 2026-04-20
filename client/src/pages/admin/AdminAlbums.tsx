@@ -1,6 +1,7 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Link2, Image, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Link2, Image, Loader2, Images } from "lucide-react";
 import { toast } from "sonner";
 import { useAdapter } from "@/contexts/AdapterContext";
 import { queryKeys } from "@/lib/adapter";
@@ -240,6 +241,11 @@ const AdminAlbums: React.FC = () => {
 
               {/* Actions */}
               <div className="flex items-center gap-1 flex-shrink-0">
+                <Link to={`/admin/albums/${album.id}`}>
+                  <Button variant="ghost" size="icon" title="Manage media">
+                    <Images className="h-4 w-4" />
+                  </Button>
+                </Link>
                 <Button
                   variant="ghost"
                   size="icon"
