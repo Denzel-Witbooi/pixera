@@ -4,11 +4,17 @@ import { LogOut, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import keycloak from "@/lib/keycloak";
 
+const DEV_BYPASS = import.meta.env.VITE_KEYCLOAK_DEV_BYPASS === "true";
+
 const AdminPanel: React.FC = () => {
   const navigate = useNavigate();
 
   const handleSignOut = () => {
-    keycloak.logout({ redirectUri: `${window.location.origin}/gallery` });
+    if (DEV_BYPASS) {
+      navigate("/gallery");
+    } else {
+      keycloak.logout({ redirectUri: `${window.location.origin}/gallery` });
+    }
   };
 
   return (
