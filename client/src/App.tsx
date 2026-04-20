@@ -1,10 +1,11 @@
 
-import React from "react";
+import React, { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AdapterProvider } from "@/contexts/AdapterContext";
 import { createAdapter, type BackendType } from "@/lib/adapter";
@@ -16,6 +17,18 @@ import NotFound from "./pages/NotFound";
 import GalleryHome from "./pages/GalleryHome";
 import GalleryAlbum from "./pages/GalleryAlbum";
 import GalleryNotFound from "./pages/GalleryNotFound";
+
+// Admin section — lazy loaded so it never appears in the gallery bundle
+const KeycloakGuard = React.lazy(() => import("./components/admin/KeycloakGuard"));
+const AdminPanel = React.lazy(() => import("./pages/admin/AdminPanel"));
+const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminAlbums = React.lazy(() => import("./pages/admin/AdminAlbums"));
+
+const AdminFallback = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
 
 // ── Single decision point for backend selection ───────────────────────────────
 const backend: BackendType =
@@ -87,7 +100,28 @@ const AppRoutes = () => (
     {/* Public gallery — no auth */}
     <Route path="/gallery" element={<GalleryHome />} />
     <Route path="/gallery/:id" element={<GalleryAlbum />} />
+    <Route path="/gallery/:id/:slug" element={<GalleryAlbum />} />
     <Route path="/gallery/not-found" element={<GalleryNotFound />} />
+
+    {/* Admin section — separate lazy chunk, guarded by Keycloak */}
+    <Route path="/admin" element={
+      <Suspense fallback={<AdminFallback />}>
+        <KeycloakGuard>
+          <AdminPanel />
+        </KeycloakGuard>
+      </Suspense>
+    }>
+      <Route index element={
+        <Suspense fallback={<AdminFallback />}>
+          <AdminDashboard />
+        </Suspense>
+      } />
+      <Route path="albums" element={
+        <Suspense fallback={<AdminFallback />}>
+          <AdminAlbums />
+        </Suspense>
+      } />
+    </Route>
 
     {/* Legacy authenticated routes */}
     <Route path="/auth" element={<Auth />} />
