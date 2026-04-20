@@ -6,6 +6,7 @@ using Minio.DataModel.Args;
 using Minio.Exceptions;
 using Pixera.Api.Auth;
 using Pixera.Api.Data;
+using Pixera.Api.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -134,6 +135,58 @@ var admin = app.MapGroup("/api/admin").RequireAuthorization();
 admin.MapGet("/me", (HttpContext ctx) =>
     Results.Ok(new { username = ctx.User.Identity?.Name }));
 
+admin.MapPost("/albums", async (CreateAlbumRequest req, AppDbContext db, HttpContext ctx) =>
+{
+    var album = new Pixera.Api.Models.Album
+    {
+        Id = Guid.NewGuid(),
+        Title = req.Title,
+        Description = req.Description ?? "",
+        CoverUrl = "",
+        Slug = SlugGenerator.Generate(req.Title),
+        UserId = ctx.User.Identity?.Name ?? "unknown",
+        CreatedAt = DateTime.UtcNow,
+    };
+
+    db.Albums.Add(album);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/api/albums/{album.Id}", new
+    {
+        id = album.Id.ToString(),
+        title = album.Title,
+        description = album.Description,
+        coverUrl = album.CoverUrl,
+        createdAt = album.CreatedAt.ToString("O"),
+        itemCount = 0,
+        slug = album.Slug,
+        userId = album.UserId,
+    });
+});
+
+admin.MapPut("/albums/{id:guid}", async (Guid id, UpdateAlbumRequest req, AppDbContext db) =>
+{
+    var album = await db.Albums.FindAsync(id);
+    if (album is null) return Results.NotFound();
+
+    album.Title = req.Title;
+    album.Description = req.Description ?? "";
+    await db.SaveChangesAsync();
+
+    return Results.NoContent();
+});
+
+admin.MapDelete("/albums/{id:guid}", async (Guid id, AppDbContext db) =>
+{
+    var album = await db.Albums.FindAsync(id);
+    if (album is null) return Results.NotFound();
+
+    db.Albums.Remove(album);
+    await db.SaveChangesAsync();
+
+    return Results.NoContent();
+});
+
 app.Run();
 
 static string GetContentType(string path) => Path.GetExtension(path).ToLowerInvariant() switch
@@ -148,3 +201,6 @@ static string GetContentType(string path) => Path.GetExtension(path).ToLowerInva
 };
 
 public partial class Program { }
+
+record CreateAlbumRequest(string Title, string? Description);
+record UpdateAlbumRequest(string Title, string? Description);

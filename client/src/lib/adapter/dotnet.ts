@@ -1,8 +1,15 @@
 import type { Album, MediaItem } from "@/lib/types";
 import type { DataAdapter } from "./types";
+import keycloak from "@/lib/keycloak";
 
 export class DotNetAdapter implements DataAdapter {
   constructor(private readonly baseUrl: string) {}
+
+  private authHeaders(): HeadersInit {
+    return keycloak.token
+      ? { Authorization: `Bearer ${keycloak.token}`, "Content-Type": "application/json" }
+      : { "Content-Type": "application/json" };
+  }
 
   async fetchAlbums(): Promise<Album[]> {
     const res = await fetch(`${this.baseUrl}/api/albums`);
@@ -17,16 +24,31 @@ export class DotNetAdapter implements DataAdapter {
     return res.json();
   }
 
-  createAlbum(_album: Omit<Album, "itemCount">): Promise<Album> {
-    throw new Error("Not implemented");
+  async createAlbum(album: Omit<Album, "itemCount">): Promise<Album> {
+    const res = await fetch(`${this.baseUrl}/api/admin/albums`, {
+      method: "POST",
+      headers: this.authHeaders(),
+      body: JSON.stringify({ title: album.title, description: album.description }),
+    });
+    if (!res.ok) throw new Error(`POST /api/admin/albums failed: ${res.status}`);
+    return res.json();
   }
 
-  updateAlbum(_id: string, _updates: Partial<Album>): Promise<void> {
-    throw new Error("Not implemented");
+  async updateAlbum(id: string, updates: Partial<Album>): Promise<void> {
+    const res = await fetch(`${this.baseUrl}/api/admin/albums/${id}`, {
+      method: "PUT",
+      headers: this.authHeaders(),
+      body: JSON.stringify({ title: updates.title, description: updates.description ?? "" }),
+    });
+    if (!res.ok) throw new Error(`PUT /api/admin/albums/${id} failed: ${res.status}`);
   }
 
-  deleteAlbum(_id: string): Promise<void> {
-    throw new Error("Not implemented");
+  async deleteAlbum(id: string): Promise<void> {
+    const res = await fetch(`${this.baseUrl}/api/admin/albums/${id}`, {
+      method: "DELETE",
+      headers: this.authHeaders(),
+    });
+    if (!res.ok) throw new Error(`DELETE /api/admin/albums/${id} failed: ${res.status}`);
   }
 
   updateAlbumCover(_albumId: string, _coverUrl: string): Promise<void> {
