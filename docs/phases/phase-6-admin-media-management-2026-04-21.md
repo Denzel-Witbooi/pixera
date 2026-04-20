@@ -2,7 +2,7 @@
 **Date:** 2026-04-21
 **Branch:** `phase-6/admin-media-management`
 **GitHub Issue:** [#8](https://github.com/Denzel-Witbooi/pixera/issues/8)
-**Status:** In Progress
+**Status:** Complete
 
 ---
 
@@ -113,14 +113,15 @@ After a delete, the same keys are invalidated so counts and cover stay accurate 
 
 ---
 
-## Key files to be introduced or changed in this phase
+## Key files introduced or changed in this phase
 
-| File | What changes |
+| File | What changed |
 |---|---|
-| `server/Pixera.Api/Program.cs` | New `POST /api/admin/storage/upload`, `POST /api/admin/albums/:id/media`, `DELETE /api/admin/media/:id` endpoints |
-| `client/src/lib/adapter/dotnet.ts` | Implement `uploadFile`, `insertMedia`, `deleteMedia` |
-| `client/src/pages/admin/AdminAlbumDetail.tsx` | New page — upload zone, per-file progress, media grid, set cover, delete |
-| `client/src/App.tsx` | Register `/admin/albums/:id` route |
+| `server/Pixera.Api/Program.cs` | Added `POST /api/admin/storage/upload`, `POST /api/admin/albums/:id/media`, `DELETE /api/admin/media/:id`, `PATCH /api/admin/albums/:id/cover` |
+| `client/src/lib/adapter/dotnet.ts` | Implemented `uploadFile`, `insertMedia`, `deleteMedia`, `updateAlbumCover` |
+| `client/src/pages/admin/AdminAlbumDetail.tsx` | New page — drag-and-drop upload zone, per-file XHR progress bars, media grid with hover actions |
+| `client/src/pages/admin/AdminAlbums.tsx` | Added "Manage Media" icon link per album row |
+| `client/src/App.tsx` | Registered `/admin/albums/:id` route |
 
 ---
 
