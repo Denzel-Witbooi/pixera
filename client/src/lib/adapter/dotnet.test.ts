@@ -66,3 +66,72 @@ describe("DotNetAdapter.fetchAlbums", () => {
     await expect(adapter.fetchAlbums()).rejects.toThrow();
   });
 });
+
+describe("DotNetAdapter.fetchAlbum", () => {
+  it("returns Album when found", async () => {
+    const apiResponse = {
+      id: "abc-123",
+      title: "Summer Trip",
+      description: "Beach photos",
+      coverUrl: "https://example.com/cover.jpg",
+      createdAt: "2024-08-01T00:00:00.0000000Z",
+      itemCount: 2,
+      slug: "summer-trip",
+      userId: "user-1",
+    };
+
+    server.use(
+      http.get(`${API_BASE}/api/albums/abc-123`, () => HttpResponse.json(apiResponse))
+    );
+
+    const adapter = new DotNetAdapter(API_BASE);
+    const album = await adapter.fetchAlbum("abc-123");
+
+    expect(album).not.toBeNull();
+    expect(album!.id).toBe("abc-123");
+    expect(album!.slug).toBe("summer-trip");
+  });
+
+  it("returns null when album not found", async () => {
+    server.use(
+      http.get(`${API_BASE}/api/albums/missing`, () =>
+        new HttpResponse(null, { status: 404 })
+      )
+    );
+
+    const adapter = new DotNetAdapter(API_BASE);
+    const album = await adapter.fetchAlbum("missing");
+
+    expect(album).toBeNull();
+  });
+});
+
+describe("DotNetAdapter.fetchMedia", () => {
+  it("returns MediaItem array for an album", async () => {
+    const apiResponse = [
+      {
+        id: "m-1",
+        albumId: "abc-123",
+        url: "https://example.com/photo.jpg",
+        type: "image",
+        createdAt: "2024-08-01T00:00:00.0000000Z",
+        title: null,
+        description: null,
+      },
+    ];
+
+    server.use(
+      http.get(`${API_BASE}/api/albums/abc-123/media`, () =>
+        HttpResponse.json(apiResponse)
+      )
+    );
+
+    const adapter = new DotNetAdapter(API_BASE);
+    const media = await adapter.fetchMedia("abc-123");
+
+    expect(media).toHaveLength(1);
+    expect(media[0].url).toBe("https://example.com/photo.jpg");
+    expect(media[0].type).toBe("image");
+    expect(media[0].albumId).toBe("abc-123");
+  });
+});

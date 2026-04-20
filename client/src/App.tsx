@@ -13,6 +13,9 @@ import Album from "./pages/Album";
 import Auth from "./pages/Auth";
 import CreateAlbum from "./pages/CreateAlbum";
 import NotFound from "./pages/NotFound";
+import GalleryHome from "./pages/GalleryHome";
+import GalleryAlbum from "./pages/GalleryAlbum";
+import GalleryNotFound from "./pages/GalleryNotFound";
 
 // ── Single decision point for backend selection ───────────────────────────────
 const backend: BackendType =
@@ -81,6 +84,12 @@ function App() {
 // Separate AppRoutes component to ensure hooks are used correctly
 const AppRoutes = () => (
   <Routes>
+    {/* Public gallery — no auth */}
+    <Route path="/gallery" element={<GalleryHome />} />
+    <Route path="/gallery/:id/:slug" element={<GalleryAlbum />} />
+    <Route path="/gallery/not-found" element={<GalleryNotFound />} />
+
+    {/* Legacy authenticated routes */}
     <Route path="/auth" element={<Auth />} />
     <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
     <Route path="/album/:id" element={<ProtectedRoute><Album /></ProtectedRoute>} />

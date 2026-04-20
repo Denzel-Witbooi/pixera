@@ -6,6 +6,7 @@ export type Album = {
   coverUrl: string;
   createdAt: string;
   itemCount: number;
+  slug: string;
   userId: string;
 };
 

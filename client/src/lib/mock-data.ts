@@ -14,6 +14,7 @@ export const SEED_ALBUMS: Album[] = [
     coverUrl: img("cpt-cover"),
     createdAt: "2026-01-15T08:00:00.000Z",
     itemCount: 6,
+    slug: "cape-town-trip",
     userId: MOCK_USER_ID,
   },
   {
@@ -23,6 +24,7 @@ export const SEED_ALBUMS: Album[] = [
     coverUrl: img("brand-shoot"),
     createdAt: "2026-02-10T10:30:00.000Z",
     itemCount: 4,
+    slug: "vodacom-brand-shoot",
     userId: MOCK_USER_ID,
   },
   {
@@ -32,6 +34,7 @@ export const SEED_ALBUMS: Album[] = [
     coverUrl: img("office-events"),
     createdAt: "2026-03-01T12:00:00.000Z",
     itemCount: 5,
+    slug: "office-events-2026",
     userId: MOCK_USER_ID,
   },
 ];
