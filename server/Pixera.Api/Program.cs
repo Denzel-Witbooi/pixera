@@ -1,7 +1,10 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Minio;
 using Minio.DataModel.Args;
 using Minio.Exceptions;
+using Pixera.Api.Auth;
 using Pixera.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,7 +19,32 @@ builder.Services.AddMinio(opts => opts
     .WithCredentials(minioCfg["AccessKey"]!, minioCfg["SecretKey"]!)
     .WithSSL(minioCfg.GetValue<bool>("UseSSL")));
 
+// ── Authentication ─────────────────────────────────────────────────────────────
+// Development: every request is automatically authenticated — no Keycloak needed.
+// Staging / Production: validate JWTs issued by the Keycloak realm.
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddAuthentication("DevBypass")
+        .AddScheme<AuthenticationSchemeOptions, DevBypassAuthHandler>("DevBypass", _ => { });
+}
+else
+{
+    var kc = builder.Configuration.GetSection("Keycloak");
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(opts =>
+        {
+            opts.Authority = kc["Authority"];
+            opts.Audience  = kc["Audience"];
+            opts.RequireHttpsMetadata = true;
+        });
+}
+
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapGet("/api/albums", async (AppDbContext db) =>
 {
@@ -98,6 +126,13 @@ app.MapGet("/api/storage/{bucket}/{*objectPath}", async (string bucket, string o
         return Results.NotFound();
     }
 });
+
+// ── Protected admin group — Phase 5/6 write endpoints go here ─────────────────
+// RequireAuthorization() means every endpoint in this group needs a valid token
+// (or the DevBypass handler in Development).
+var admin = app.MapGroup("/api/admin").RequireAuthorization();
+admin.MapGet("/me", (HttpContext ctx) =>
+    Results.Ok(new { username = ctx.User.Identity?.Name }));
 
 app.Run();
 
