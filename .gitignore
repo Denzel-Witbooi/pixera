@@ -15,6 +15,13 @@ dist-ssr
 .env.*
 !.env.example
 
+# .NET build artifacts
+server/**/bin/
+server/**/obj/
+
+# Test secrets (contains DB credentials)
+server/**/appsettings.Test.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

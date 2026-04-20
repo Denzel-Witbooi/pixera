@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh auth *)",
+      "Bash(gh issue create --title 'Phase 2: Public GalleryView — shareable album pages' --body ' *)",
+      "Bash(gh issue create --title 'Phase 3: Viewer media — fullscreen carousel + downloads' --body ' *)",
+      "Bash(gh issue create --title 'Phase 4: Admin foundation — Keycloak + protected routes' --body ' *)",
+      "Bash(gh issue create --title 'Phase 5: Admin album management' --body ' *)",
+      "Bash(gh issue create --title 'Phase 6: Admin media management' --body ' *)",
+      "Bash(gh issue create --title 'Phase 7: Production hardening' --body ' *)"
+    ]
+  }
+}

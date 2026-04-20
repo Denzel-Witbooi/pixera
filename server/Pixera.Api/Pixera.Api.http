@@ -1,0 +1,6 @@
+@Pixera.Api_HostAddress = http://localhost:5063
+
+GET {{Pixera.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Pixera.Api.Tests/Pixera.Api.Tests.csproj" />
+  <Project Path="Pixera.Api/Pixera.Api.csproj" />
+</Solution>
