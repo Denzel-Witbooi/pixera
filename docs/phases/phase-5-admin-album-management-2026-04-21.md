@@ -1,6 +1,6 @@
 # Phase 5 — Admin Album Management
 **Date:** 2026-04-21
-**Branch:** `phase-5/admin-album-management` *(committed on `phase-4/admin-keycloak-auth` pending merge to main)*
+**Branch:** `phase-5/admin-album-management` *(phase 4 branch merged to main on 2026-04-21; phase-5 branch cut from main)*
 **GitHub Issue:** [#7](https://github.com/Denzel-Witbooi/pixera/issues/7)
 **Status:** Complete
 
@@ -99,7 +99,8 @@ The Copy Link button writes `https://<origin>/gallery/<id>/<slug>` to the clipbo
 
 | # | What went wrong | Why it happened | How it was fixed |
 |---|---|---|---|
-| 1 | Phase 5 work was committed on the `phase-4/admin-keycloak-auth` branch | Phase 4 was finished but not yet merged; work continued on the same branch rather than cutting a new one | Noted in this document. Branch should be merged to `main` and a `phase-5/admin-album-management` branch created for future reference. |
+| 1 | Phase 5 work was committed on the `phase-4/admin-keycloak-auth` branch | Phase 4 was finished but not yet merged; work continued on the same branch rather than cutting a new one | Phase 4 branch merged to `main` on 2026-04-21; `phase-5/admin-album-management` branch cut from main. |
+| 2 | Visiting `/admin` showed an infinite loading spinner | `KeycloakGuard` calls `keycloak.init({ onLoad: "login-required" })` but `VITE_KEYCLOAK_URL` was not set in `.env`, so the Keycloak client silently failed and `ready` never became `true` | Added `VITE_KEYCLOAK_DEV_BYPASS=true` env flag. When set, `KeycloakGuard` skips init and renders children immediately, mirroring the backend `DevBypassAuthHandler`. `AdminPanel` sign-out falls back to `navigate("/gallery")` in bypass mode so it does not call `keycloak.logout()` on an uninitialised client. |
 
 ---
 
@@ -111,6 +112,9 @@ The Copy Link button writes `https://<origin>/gallery/<id>/<slug>` to the clipbo
 | `client/src/lib/adapter/dotnet.ts` | Implemented `createAlbum`, `updateAlbum`, `deleteAlbum` with Bearer token headers |
 | `client/src/pages/admin/AdminAlbums.tsx` | New page — album list, create/edit/delete dialogs, copy link action |
 | `client/src/App.tsx` | Registered `/admin/albums` route; added `/gallery/:id/:slug` route for pretty shareable links |
+| `client/src/components/admin/KeycloakGuard.tsx` | Added `VITE_KEYCLOAK_DEV_BYPASS` check to skip Keycloak init in local dev |
+| `client/src/pages/admin/AdminPanel.tsx` | Sign-out falls back to local navigation when `VITE_KEYCLOAK_DEV_BYPASS` is set |
+| `client/.env.example` | Documented `VITE_KEYCLOAK_DEV_BYPASS` alongside the existing Keycloak vars |
 
 ---
 
