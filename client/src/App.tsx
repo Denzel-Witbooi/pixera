@@ -16,7 +16,7 @@ import NotFound from "./pages/NotFound";
 
 // ── Single decision point for backend selection ───────────────────────────────
 const backend: BackendType =
-  import.meta.env.VITE_USE_LOCAL_DATA === "true" ? "local" : "supabase";
+  import.meta.env.VITE_USE_LOCAL_DATA === "true" ? "local" : "dotnet";
 const adapter = createAdapter(backend);
 
 // Create a client

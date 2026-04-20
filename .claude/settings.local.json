@@ -7,7 +7,11 @@
       "Bash(gh issue create --title 'Phase 4: Admin foundation — Keycloak + protected routes' --body ' *)",
       "Bash(gh issue create --title 'Phase 5: Admin album management' --body ' *)",
       "Bash(gh issue create --title 'Phase 6: Admin media management' --body ' *)",
-      "Bash(gh issue create --title 'Phase 7: Production hardening' --body ' *)"
+      "Bash(gh issue create --title 'Phase 7: Production hardening' --body ' *)",
+      "Bash(git mv *)",
+      "Bash(cp -r src client/src)",
+      "Bash(git rm *)",
+      "Bash(git add *)"
     ]
   }
 }

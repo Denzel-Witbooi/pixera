@@ -19,4 +19,11 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  test: {
+    environment: "node",
+    globals: false,
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
 }));

@@ -1,6 +1,6 @@
 import type { Album, MediaItem } from "@/lib/types";
 
-export type BackendType = "local" | "supabase";
+export type BackendType = "local" | "dotnet";
 
 export const queryKeys = {
   albums:      ()               => ["albums"]            as const,
