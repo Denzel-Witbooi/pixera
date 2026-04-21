@@ -91,6 +91,23 @@ After a delete, the same keys are invalidated so counts and cover stay accurate 
 
 ---
 
+## Local development prerequisites
+
+Unlike earlier phases, Phase 6 requires three processes running simultaneously:
+
+| Process | How to start | Default port |
+|---|---|---|
+| PostgreSQL | Already running as a Windows service (installed with the project) | 5432 |
+| MinIO | `C:\minio\minio.exe server C:\minio\data --console-address ":9001"` | 9000 (API), 9001 (console) |
+| .NET API | `cd server/Pixera.Api && dotnet run` | 5000 |
+| Vite dev server | `cd client && npm run dev` | 8080 |
+
+**One-time MinIO setup:** Open `http://localhost:9001`, log in with `minioadmin`/`minioadmin`, create a bucket named `pixera`.
+
+**System environment variable check:** Run `printenv | grep VITE` in a terminal. If `VITE_USE_LOCAL_DATA=true` appears, remove it from Windows environment variables (Settings → System → About → Advanced system settings → Environment Variables). The `.env` file controls this setting — system vars take precedence and will override it.
+
+---
+
 ## What "done" looks like for this phase
 
 - An admin can upload multiple images and videos to an album in one operation
@@ -105,11 +122,13 @@ After a delete, the same keys are invalidated so counts and cover stay accurate 
 
 ## Issues encountered & solutions
 
-*This section is updated as the phase progresses.*
-
 | # | What went wrong | Why it happened | How it was fixed |
 |---|---|---|---|
-| — | — | — | — |
+| 1 | Upload returned "Network error" in the browser | The .NET API had no CORS policy. Browsers allow simple GET requests cross-origin but block JavaScript from reading the response of cross-origin POST/multipart requests — `xhr.onerror` fires instead of `xhr.onload`. | Added `AddCors` + `UseCors()` to Program.cs allowing `localhost:8080` and `:5173`. Must be placed before `UseAuthentication` in the middleware pipeline. |
+| 2 | "Manage Media" button on album rows did not navigate | `<Link><Button>` creates `<a><button>` in the DOM — nested interactive elements. The `<button>` absorbed the click before it could bubble to the `<a>` tag. | Replaced with `<Button asChild><Link>` — shadcn's `asChild` prop merges button styles onto the Link, producing a single `<a>` element with no nesting. |
+| 3 | Client showed mock data (`album-001`, `album-002`) and albums created in the UI never appeared in Swagger or PostgreSQL | `VITE_USE_LOCAL_DATA=true` was set as a **Windows system environment variable**, which Vite gives higher priority than `.env` files. Every server restart still loaded the LocalAdapter regardless of the `.env` setting. Old Supabase env vars (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) were also present as system vars — leftover from the pre-overhaul architecture. | Remove the system env vars in Windows: **Settings → System → About → Advanced system settings → Environment Variables** — delete `VITE_USE_LOCAL_DATA`, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_ANON_KEY` from both User and System variable lists. Restart the terminal, then restart the Vite dev server. |
+| 4 | No way to tell at a glance whether the admin was using real data or mock data | Nothing in the UI indicated which adapter was active. | Added a backend mode badge to the `AdminPanel` header: amber `Local data` pill when `VITE_USE_LOCAL_DATA=true`, green `API` pill when connected to the real backend. |
+| 5 | MinIO was not running — uploads would have failed even after CORS was fixed | MinIO binary existed at `C:\minio\minio.exe` but was never started. The `pixera` bucket also did not exist yet. | Start MinIO: `C:\minio\minio.exe server C:\minio\data --console-address ":9001"`. Create the `pixera` bucket via the MinIO console at `http://localhost:9001` (login: `minioadmin` / `minioadmin`). |
 
 ---
 
