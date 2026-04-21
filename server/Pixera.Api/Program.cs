@@ -42,6 +42,10 @@ else
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(opts =>
+    opts.SwaggerDoc("v1", new() { Title = "Pixera API", Version = "v1" }));
+
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
         policy
@@ -56,6 +60,12 @@ var app = builder.Build();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(opts => opts.SwaggerEndpoint("/swagger/v1/swagger.json", "Pixera API v1"));
+}
 
 app.MapGet("/api/albums", async (AppDbContext db) =>
 {
