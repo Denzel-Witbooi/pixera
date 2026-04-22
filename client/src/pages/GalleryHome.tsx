@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { useAdapter } from "@/contexts/AdapterContext";
 import { queryKeys } from "@/lib/adapter";
 import type { Album } from "@/lib/types";
+import { resolveMediaUrl } from "@/lib/utils";
 import { Calendar, Image } from "lucide-react";
 
 const GalleryHome = () => {
@@ -42,7 +43,7 @@ const GalleryHome = () => {
               >
                 <div className="aspect-[4/3] w-full overflow-hidden rounded-xl bg-muted">
                   <img
-                    src={album.coverUrl}
+                    src={resolveMediaUrl(album.coverUrl)}
                     alt={album.title}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"

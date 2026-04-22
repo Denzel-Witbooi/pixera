@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useAdapter } from "@/contexts/AdapterContext";
 import { queryKeys } from "@/lib/adapter";
 import type { Album } from "@/lib/types";
+import { resolveMediaUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -222,7 +223,7 @@ const AdminAlbums: React.FC = () => {
               <div className="h-14 w-20 flex-shrink-0 rounded overflow-hidden bg-muted flex items-center justify-center">
                 {album.coverUrl ? (
                   <img
-                    src={album.coverUrl}
+                    src={resolveMediaUrl(album.coverUrl)}
                     alt={album.title}
                     className="h-full w-full object-cover"
                   />

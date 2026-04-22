@@ -1,6 +1,7 @@
 
 import React from "react";
 import { MediaItem } from "@/lib/types";
+import { resolveMediaUrl } from "@/lib/utils";
 
 interface MediaDisplayProps {
   item: MediaItem;
@@ -12,13 +13,13 @@ const MediaDisplay: React.FC<MediaDisplayProps> = ({ item, index }) => (
     <div className="bg-black rounded-md overflow-hidden">
       {item.type === "image" ? (
         <img
-          src={item.url}
+          src={resolveMediaUrl(item.url)}
           alt={item.title || `Media item ${index + 1}`}
           className="w-full h-auto max-h-[80vh] object-contain mx-auto"
         />
       ) : (
         <video
-          src={item.url}
+          src={resolveMediaUrl(item.url)}
           controls
           playsInline
           muted
