@@ -73,6 +73,13 @@ builder.Services.AddHttpClient("github", client =>
 
 var app = builder.Build();
 
+// Apply any pending EF Core migrations on startup — safe to run on every boot.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
+
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
