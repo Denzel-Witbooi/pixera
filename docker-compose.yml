@@ -1,0 +1,97 @@
+services:
+
+  # ── PostgreSQL ───────────────────────────────────────────────────────────────
+  # Shared by the Pixera API and Keycloak (separate databases).
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── MinIO (S3-compatible object storage) ─────────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER:     ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Keycloak (identity & access management) ──────────────────────────────────
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    restart: unless-stopped
+    command: start
+    environment:
+      KC_DB:               postgres
+      KC_DB_URL:           jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME:      ${POSTGRES_USER}
+      KC_DB_PASSWORD:      ${POSTGRES_PASSWORD}
+      KC_HOSTNAME:         ${AUTH_DOMAIN}
+      KC_PROXY:            edge
+      KEYCLOAK_ADMIN:      ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ── Pixera .NET API ──────────────────────────────────────────────────────────
+  api:
+    build: ./server/Pixera.Api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT:        Production
+      ConnectionStrings__Default:    Host=postgres;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      MinIO__Endpoint:               minio:9000
+      MinIO__AccessKey:              ${MINIO_ROOT_USER}
+      MinIO__SecretKey:              ${MINIO_ROOT_PASSWORD}
+      MinIO__UseSSL:                 "false"
+      MinIO__Bucket:                 ${MINIO_BUCKET}
+      Keycloak__Authority:           https://${AUTH_DOMAIN}/realms/${KEYCLOAK_REALM}
+      Keycloak__Audience:            ${KEYCLOAK_CLIENT_ID}
+      CORS_ALLOWED_ORIGINS:          ${CORS_ALLOWED_ORIGINS}
+      GitHub__Token:                 ${GITHUB_TOKEN}
+      GitHub__Repo:                  ${GITHUB_REPO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  # ── Caddy (reverse proxy + automatic HTTPS) ──────────────────────────────────
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"    # HTTP/3
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+      - keycloak
+
+volumes:
+  postgres_data:
+  minio_data:
+  caddy_data:
+  caddy_config:

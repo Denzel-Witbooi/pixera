@@ -49,12 +49,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(opts =>
     opts.SwaggerDoc("v1", new() { Title = "Pixera API", Version = "v1" }));
 
+var corsOrigins = (builder.Configuration["CORS_ALLOWED_ORIGINS"] ?? "")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .Concat(new[] { "http://localhost:8080", "http://localhost:5173" })
+    .ToArray();
+
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
         policy
-            .WithOrigins(
-                "http://localhost:8080",
-                "http://localhost:5173")   // Vite defaults
+            .WithOrigins(corsOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()));
 

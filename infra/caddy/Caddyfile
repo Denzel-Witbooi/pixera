@@ -1,0 +1,21 @@
+# Pixera Caddyfile
+# Replace the domain placeholders here OR set them via environment variables
+# in docker-compose.yml and reference them as {$API_DOMAIN} etc.
+#
+# Caddy automatically provisions and renews TLS certificates via Let's Encrypt.
+# Ensure ports 80 and 443 are open on your VPS firewall before starting.
+
+# ── API ───────────────────────────────────────────────────────────────────────
+{$API_DOMAIN} {
+    reverse_proxy api:8080
+}
+
+# ── Keycloak ──────────────────────────────────────────────────────────────────
+{$AUTH_DOMAIN} {
+    reverse_proxy keycloak:8080
+}
+
+# ── MinIO console (optional — remove in production if not needed externally) ──
+{$STORAGE_DOMAIN} {
+    reverse_proxy minio:9001
+}
