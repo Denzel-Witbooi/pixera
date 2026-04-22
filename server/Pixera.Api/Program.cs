@@ -1,3 +1,6 @@
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -54,6 +57,14 @@ builder.Services.AddCors(options =>
                 "http://localhost:5173")   // Vite defaults
             .AllowAnyHeader()
             .AllowAnyMethod()));
+
+builder.Services.AddHttpClient("github", client =>
+{
+    client.BaseAddress = new Uri("https://api.github.com");
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Pixera-Feedback/1.0");
+    client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
+    client.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
+});
 
 var app = builder.Build();
 
@@ -166,6 +177,53 @@ app.MapGet("/api/storage/{bucket}/{*objectPath}", async (string bucket, string o
     {
         return Results.NotFound();
     }
+});
+
+app.MapPost("/api/feedback", async (FeedbackRequest req, IHttpClientFactory httpFactory, IConfiguration config) =>
+{
+    if (string.IsNullOrWhiteSpace(req.Name) ||
+        string.IsNullOrWhiteSpace(req.Email) ||
+        string.IsNullOrWhiteSpace(req.Message))
+        return Results.BadRequest("Name, email and message are required.");
+
+    var token = config["GitHub:Token"];
+    var repo  = config["GitHub:Repo"];
+
+    if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(repo))
+        return Results.Problem("Feedback is not configured on this server.");
+
+    var labelMap = new Dictionary<string, string>
+    {
+        { "Bug report",      "bug"         },
+        { "Feature request", "enhancement" },
+        { "General",         "question"    },
+    };
+    var label = labelMap.TryGetValue(req.Category ?? "", out var l) ? l : "feedback";
+
+    var body = $"""
+        **From:** {req.Name} ({req.Email})
+        **Category:** {req.Category ?? "General"}
+
+        {req.Message}
+        """;
+
+    var payload = JsonSerializer.Serialize(new
+    {
+        title  = $"[Feedback] {req.Category ?? "General"} from {req.Name}",
+        body,
+        labels = new[] { "feedback", label },
+    });
+
+    var client = httpFactory.CreateClient("github");
+    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+    var response = await client.PostAsync(
+        $"/repos/{repo}/issues",
+        new StringContent(payload, Encoding.UTF8, "application/json"));
+
+    return response.IsSuccessStatusCode
+        ? Results.Ok(new { message = "Feedback submitted. Thank you!" })
+        : Results.Problem("Failed to submit feedback. Please try again later.");
 });
 
 // ── Protected admin group — Phase 5/6 write endpoints go here ─────────────────
@@ -361,6 +419,7 @@ static string GetContentType(string path) => Path.GetExtension(path).ToLowerInva
 
 public partial class Program { }
 
+record FeedbackRequest(string Name, string Email, string? Category, string Message);
 record CreateAlbumRequest(string Title, string? Description);
 record UpdateAlbumRequest(string Title, string? Description);
 record SetCoverRequest(string CoverUrl);
