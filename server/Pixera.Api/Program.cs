@@ -24,9 +24,11 @@ builder.Services.AddMinio(opts => opts
     .WithSSL(minioCfg.GetValue<bool>("UseSSL")));
 
 // ── Authentication ─────────────────────────────────────────────────────────────
-// Development: every request is automatically authenticated — no Keycloak needed.
-// Staging / Production: validate JWTs issued by the Keycloak realm.
-if (builder.Environment.IsDevelopment())
+// Development or AUTH_BYPASS=true: every request is auto-authenticated.
+// Production (no bypass): validate JWTs issued by the Keycloak realm.
+var authBypass = builder.Configuration.GetValue<bool>("AUTH_BYPASS");
+
+if (builder.Environment.IsDevelopment() || authBypass)
 {
     builder.Services.AddAuthentication("DevBypass")
         .AddScheme<AuthenticationSchemeOptions, DevBypassAuthHandler>("DevBypass", _ => { });
@@ -49,12 +51,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(opts =>
     opts.SwaggerDoc("v1", new() { Title = "Pixera API", Version = "v1" }));
 
+var corsOrigins = (builder.Configuration["CORS_ALLOWED_ORIGINS"] ?? "")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .Concat(new[] { "http://localhost:8080", "http://localhost:5173" })
+    .ToArray();
+
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
         policy
-            .WithOrigins(
-                "http://localhost:8080",
-                "http://localhost:5173")   // Vite defaults
+            .WithOrigins(corsOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()));
 

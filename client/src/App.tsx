@@ -15,6 +15,7 @@ import GalleryNotFound from "./pages/GalleryNotFound";
 import NotFound from "./pages/NotFound";
 
 // Admin section — lazy loaded so it never appears in the gallery bundle
+const AdminPinGate   = React.lazy(() => import("./components/admin/AdminPinGate"));
 const KeycloakGuard  = React.lazy(() => import("./components/admin/KeycloakGuard"));
 const AdminPanel     = React.lazy(() => import("./pages/admin/AdminPanel"));
 const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
@@ -54,12 +55,14 @@ function App() {
               <Route path="/gallery/:slug" element={<GalleryAlbum />} />
               <Route path="/gallery/not-found" element={<GalleryNotFound />} />
 
-              {/* Admin — lazy, Keycloak-guarded */}
+              {/* Admin — PIN gate (demo friction) + Keycloak (production auth) */}
               <Route path="/admin" element={
                 <Suspense fallback={<AdminFallback />}>
-                  <KeycloakGuard>
-                    <AdminPanel />
-                  </KeycloakGuard>
+                  <AdminPinGate>
+                    <KeycloakGuard>
+                      <AdminPanel />
+                    </KeycloakGuard>
+                  </AdminPinGate>
                 </Suspense>
               }>
                 <Route index element={
