@@ -11,7 +11,12 @@
       "Bash(git mv *)",
       "Bash(cp -r src client/src)",
       "Bash(git rm *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(where minio *)",
+      "Read(//c/Users/Owner/**)",
+      "Read(//c/minio/**)",
+      "Bash(/admin/albums\" client/src/pages/admin/AdminAlbums.tsx)",
+      "Bash(grep -n \"Manage\\\\|asChild\\\\|to={`/admin/albums\" client/src/pages/admin/AdminAlbums.tsx)"
     ]
   }
 }

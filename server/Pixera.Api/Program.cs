@@ -128,6 +128,26 @@ app.MapGet("/api/albums/{id:guid}/media", async (Guid id, AppDbContext db) =>
     return Results.Ok(media);
 });
 
+app.MapGet("/api/albums/slug/{slug}", async (string slug, AppDbContext db) =>
+{
+    var album = await db.Albums
+        .Where(a => a.Slug == slug)
+        .Select(a => new
+        {
+            id = a.Id.ToString(),
+            title = a.Title,
+            description = a.Description,
+            coverUrl = a.CoverUrl,
+            createdAt = a.CreatedAt.ToString("O"),
+            itemCount = a.MediaItems.Count,
+            slug = a.Slug,
+            userId = a.UserId,
+        })
+        .FirstOrDefaultAsync();
+
+    return album is null ? Results.NotFound() : Results.Ok(album);
+});
+
 app.MapGet("/api/storage/{bucket}/{*objectPath}", async (string bucket, string objectPath, IMinioClient minio) =>
 {
     try
@@ -157,13 +177,21 @@ admin.MapGet("/me", (HttpContext ctx) =>
 
 admin.MapPost("/albums", async (CreateAlbumRequest req, AppDbContext db, HttpContext ctx) =>
 {
+    var baseSlug = SlugGenerator.Generate(req.Title);
+    var slug = baseSlug;
+    var counter = 2;
+    while (await db.Albums.AnyAsync(a => a.Slug == slug))
+    {
+        slug = $"{baseSlug}-{counter++}";
+    }
+
     var album = new Pixera.Api.Models.Album
     {
         Id = Guid.NewGuid(),
         Title = req.Title,
         Description = req.Description ?? "",
         CoverUrl = "",
-        Slug = SlugGenerator.Generate(req.Title),
+        Slug = slug,
         UserId = ctx.User.Identity?.Name ?? "unknown",
         CreatedAt = DateTime.UtcNow,
     };

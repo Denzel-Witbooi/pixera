@@ -100,8 +100,7 @@ const AppRoutes = () => (
   <Routes>
     {/* Public gallery — no auth */}
     <Route path="/gallery" element={<GalleryHome />} />
-    <Route path="/gallery/:id" element={<GalleryAlbum />} />
-    <Route path="/gallery/:id/:slug" element={<GalleryAlbum />} />
+    <Route path="/gallery/:slug" element={<GalleryAlbum />} />
     <Route path="/gallery/not-found" element={<GalleryNotFound />} />
 
     {/* Admin section — separate lazy chunk, guarded by Keycloak */}
@@ -122,7 +121,7 @@ const AppRoutes = () => (
           <AdminAlbums />
         </Suspense>
       } />
-      <Route path="albums/:id" element={
+      <Route path="albums/:slug" element={
         <Suspense fallback={<AdminFallback />}>
           <AdminAlbumDetail />
         </Suspense>

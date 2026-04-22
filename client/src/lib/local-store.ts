@@ -45,6 +45,10 @@ export function getAlbum(id: string): Album | null {
   return albums().find((a) => a.id === id) ?? null;
 }
 
+export function getAlbumBySlug(slug: string): Album | null {
+  return albums().find((a) => a.slug === slug) ?? null;
+}
+
 export function insertAlbum(album: Omit<Album, "itemCount">): Album {
   const next: Album = { ...album, itemCount: 0 };
   const all = [next, ...albums()];

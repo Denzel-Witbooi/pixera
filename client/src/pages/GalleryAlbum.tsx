@@ -6,13 +6,14 @@ import { useAdapter } from "@/contexts/AdapterContext";
 import { queryKeys } from "@/lib/adapter";
 import type { Album, MediaItem } from "@/lib/types";
 import { resolveMediaUrl } from "@/lib/utils";
+
 import MediaCarousel from "@/components/MediaCarousel";
 import { Button } from "@/components/ui/button";
 import { buildAlbumZip } from "@/lib/buildAlbumZip";
 import { useToast } from "@/components/ui/use-toast";
 
 const GalleryAlbum = () => {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const adapter = useAdapter();
   const { toast } = useToast();
 
@@ -20,14 +21,14 @@ const GalleryAlbum = () => {
   const [carouselIndex, setCarouselIndex] = useState(0);
 
   const { data: album, isLoading: albumLoading } = useQuery<Album | null>({
-    queryKey: queryKeys.album(id!),
-    queryFn: () => adapter.fetchAlbum(id!),
-    enabled: !!id,
+    queryKey: queryKeys.albumSlug(slug!),
+    queryFn: () => adapter.fetchAlbumBySlug(slug!),
+    enabled: !!slug,
   });
 
   const { data: media = [], isLoading: mediaLoading } = useQuery<MediaItem[]>({
-    queryKey: queryKeys.media(id!),
-    queryFn: () => adapter.fetchMedia(id!),
+    queryKey: queryKeys.media(album?.id ?? ""),
+    queryFn: () => adapter.fetchMedia(album!.id),
     enabled: !!album,
   });
 

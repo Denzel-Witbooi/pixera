@@ -12,6 +12,10 @@ export class LocalAdapter implements DataAdapter {
     return Promise.resolve(localStore.getAlbum(id));
   }
 
+  fetchAlbumBySlug(slug: string): Promise<Album | null> {
+    return Promise.resolve(localStore.getAlbumBySlug(slug));
+  }
+
   createAlbum(album: Omit<Album, "itemCount">): Promise<Album> {
     return Promise.resolve(localStore.insertAlbum(album));
   }
