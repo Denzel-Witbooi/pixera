@@ -19,7 +19,8 @@ dist-ssr
 server/**/bin/
 server/**/obj/
 
-# Test secrets (contains DB credentials)
+# Local secrets — never commit these
+server/**/appsettings.Development.json
 server/**/appsettings.Test.json
 
 # Editor directories and files
