@@ -1,5 +1,6 @@
 import JSZip from "jszip";
 import type { MediaItem } from "./types";
+import { resolveMediaUrl } from "./utils";
 
 const MIME_TO_EXT: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -26,7 +27,7 @@ export async function buildAlbumZip(
 
   await Promise.all(
     items.map(async (item, index) => {
-      const res = await fetcher(item.url);
+      const res = await fetcher(resolveMediaUrl(item.url));
       const ext = extFromResponse(res, item.url);
       const name = item.title ? `${item.title}.${ext}` : `${item.type}-${index + 1}.${ext}`;
       const buffer = await res.arrayBuffer();

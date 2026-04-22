@@ -182,7 +182,7 @@ const AdminAlbums: React.FC = () => {
   });
 
   const copyShareableLink = (album: Album) => {
-    const url = `${window.location.origin}/gallery/${album.id}/${album.slug}`;
+    const url = `${window.location.origin}/gallery/${album.slug}`;
     navigator.clipboard.writeText(url).then(
       () => toast.success("Link copied to clipboard"),
       () => toast.error("Failed to copy link"),
@@ -243,7 +243,7 @@ const AdminAlbums: React.FC = () => {
               {/* Actions */}
               <div className="flex items-center gap-1 flex-shrink-0">
                 <Button variant="ghost" size="icon" title="Manage media" asChild>
-                  <Link to={`/admin/albums/${album.id}`}>
+                  <Link to={`/admin/albums/${album.slug}`}>
                     <Images className="h-4 w-4" />
                   </Link>
                 </Button>

@@ -81,7 +81,7 @@ const QueueStatusIcon: React.FC<{ status: QueueStatus }> = ({ status }) => {
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 const AdminAlbumDetail: React.FC = () => {
-  const { id: albumId } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const adapter = useAdapter();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -92,22 +92,25 @@ const AdminAlbumDetail: React.FC = () => {
   const [isSettingCover, setIsSettingCover] = useState<string | null>(null);
 
   const { data: album } = useQuery({
-    queryKey: queryKeys.album(albumId!),
-    queryFn: () => adapter.fetchAlbum(albumId!),
-    enabled: !!albumId,
+    queryKey: queryKeys.albumSlug(slug!),
+    queryFn: () => adapter.fetchAlbumBySlug(slug!),
+    enabled: !!slug,
   });
 
+  const albumId = album?.id;
+
   const { data: media = [], isLoading: mediaLoading } = useQuery({
-    queryKey: queryKeys.media(albumId!),
+    queryKey: queryKeys.media(albumId ?? ""),
     queryFn: () => adapter.fetchMedia(albumId!),
     enabled: !!albumId,
   });
 
   const invalidateAll = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.media(albumId!) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.album(albumId!) });
+    if (!albumId) return;
+    queryClient.invalidateQueries({ queryKey: queryKeys.media(albumId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.albumSlug(slug!) });
     queryClient.invalidateQueries({ queryKey: queryKeys.albums() });
-  }, [queryClient, albumId]);
+  }, [queryClient, albumId, slug]);
 
   // ── Upload handler ───────────────────────────────────────────────────────────
 

@@ -24,6 +24,13 @@ export class DotNetAdapter implements DataAdapter {
     return res.json();
   }
 
+  async fetchAlbumBySlug(slug: string): Promise<Album | null> {
+    const res = await fetch(`${this.baseUrl}/api/albums/slug/${slug}`);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(`GET /api/albums/slug/${slug} failed: ${res.status}`);
+    return res.json();
+  }
+
   async createAlbum(album: Omit<Album, "itemCount">): Promise<Album> {
     const res = await fetch(`${this.baseUrl}/api/admin/albums`, {
       method: "POST",

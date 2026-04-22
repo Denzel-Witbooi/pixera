@@ -63,6 +63,10 @@ namespace Pixera.Api.Migrations
                     b.HasKey("Id")
                         .HasName("pk_albums");
 
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("ix_albums_slug");
+
                     b.ToTable("albums", (string)null);
                 });
 

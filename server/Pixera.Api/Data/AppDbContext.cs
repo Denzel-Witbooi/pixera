@@ -13,6 +13,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Album>(e =>
         {
             e.HasKey(a => a.Id);
+            e.HasIndex(a => a.Slug).IsUnique();
             e.Property(a => a.CreatedAt).HasDefaultValueSql("now()");
         });
 

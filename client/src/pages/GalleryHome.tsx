@@ -38,7 +38,7 @@ const GalleryHome = () => {
             {albums.map((album) => (
               <Link
                 key={album.id}
-                to={`/gallery/${album.id}`}
+                to={`/gallery/${album.slug}`}
                 className="group relative overflow-hidden rounded-xl hover:shadow-lg transition-shadow"
               >
                 <div className="aspect-[4/3] w-full overflow-hidden rounded-xl bg-muted">
