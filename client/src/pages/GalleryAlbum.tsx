@@ -5,6 +5,7 @@ import { Loader2, ArrowLeft, FolderDown } from "lucide-react";
 import { useAdapter } from "@/contexts/AdapterContext";
 import { queryKeys } from "@/lib/adapter";
 import type { Album, MediaItem } from "@/lib/types";
+import { resolveMediaUrl } from "@/lib/utils";
 import MediaCarousel from "@/components/MediaCarousel";
 import { Button } from "@/components/ui/button";
 import { buildAlbumZip } from "@/lib/buildAlbumZip";
@@ -85,7 +86,7 @@ const GalleryAlbum = () => {
       <main className="container max-w-7xl mx-auto px-4 py-8">
         {album?.coverUrl && (
           <div className="relative w-full aspect-[21/6] rounded-xl overflow-hidden mb-8">
-            <img src={album.coverUrl} alt={album.title} className="w-full h-full object-cover" />
+            <img src={resolveMediaUrl(album.coverUrl)} alt={album.title} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
             <div className="absolute bottom-0 left-0 p-4 sm:p-6 text-white">
               <h1 className="text-2xl sm:text-3xl font-medium">{album.title}</h1>
@@ -111,13 +112,13 @@ const GalleryAlbum = () => {
               >
                 {item.type === "image" ? (
                   <img
-                    src={item.url}
+                    src={resolveMediaUrl(item.url)}
                     alt={item.title ?? ""}
                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                     loading="lazy"
                   />
                 ) : (
-                  <video src={item.url} className="w-full h-full object-cover" />
+                  <video src={resolveMediaUrl(item.url)} className="w-full h-full object-cover" />
                 )}
               </button>
             ))}

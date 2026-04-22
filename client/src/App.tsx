@@ -23,6 +23,7 @@ const KeycloakGuard = React.lazy(() => import("./components/admin/KeycloakGuard"
 const AdminPanel = React.lazy(() => import("./pages/admin/AdminPanel"));
 const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminAlbums = React.lazy(() => import("./pages/admin/AdminAlbums"));
+const AdminAlbumDetail = React.lazy(() => import("./pages/admin/AdminAlbumDetail"));
 
 const AdminFallback = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -119,6 +120,11 @@ const AppRoutes = () => (
       <Route path="albums" element={
         <Suspense fallback={<AdminFallback />}>
           <AdminAlbums />
+        </Suspense>
+      } />
+      <Route path="albums/:id" element={
+        <Suspense fallback={<AdminFallback />}>
+          <AdminAlbumDetail />
         </Suspense>
       } />
     </Route>

@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Link2, Image, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Link2, Image, Loader2, Images } from "lucide-react";
 import { toast } from "sonner";
 import { useAdapter } from "@/contexts/AdapterContext";
 import { queryKeys } from "@/lib/adapter";
 import type { Album } from "@/lib/types";
+import { resolveMediaUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -221,7 +223,7 @@ const AdminAlbums: React.FC = () => {
               <div className="h-14 w-20 flex-shrink-0 rounded overflow-hidden bg-muted flex items-center justify-center">
                 {album.coverUrl ? (
                   <img
-                    src={album.coverUrl}
+                    src={resolveMediaUrl(album.coverUrl)}
                     alt={album.title}
                     className="h-full w-full object-cover"
                   />
@@ -240,6 +242,11 @@ const AdminAlbums: React.FC = () => {
 
               {/* Actions */}
               <div className="flex items-center gap-1 flex-shrink-0">
+                <Button variant="ghost" size="icon" title="Manage media" asChild>
+                  <Link to={`/admin/albums/${album.id}`}>
+                    <Images className="h-4 w-4" />
+                  </Link>
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"

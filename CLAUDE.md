@@ -16,13 +16,19 @@ No test framework is configured — test coverage is zero.
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and fill in:
+The active env file is `client/.env`. Current values:
 
 ```
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key-here
-VITE_USE_LOCAL_DATA=true   # Optional: use in-memory LocalAdapter instead of Supabase
+VITE_USE_LOCAL_DATA=false        # true = LocalAdapter (mock), false = DotNetAdapter (real API)
+VITE_API_URL=http://localhost:5000
+VITE_KEYCLOAK_DEV_BYPASS=true   # skips Keycloak init in local dev
 ```
+
+**Important:** Always run `npm run dev` from a terminal opened **outside** VS Code/Cursor.
+Cursor injects the workspace root `.env` into every integrated terminal session. If a stale
+root-level `.env` exists (e.g. a Supabase leftover), it overrides `client/.env` silently.
+The Admin Panel header shows an amber "Local data" pill when `LocalAdapter` is active and a
+green "API" pill when connected to the real backend — use this as a quick sanity check.
 
 ## Architecture
 

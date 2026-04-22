@@ -1,10 +1,11 @@
 import React from "react";
 import { Outlet, Link, useNavigate } from "react-router-dom";
-import { LogOut, LayoutDashboard } from "lucide-react";
+import { LogOut, LayoutDashboard, Database, HardDrive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import keycloak from "@/lib/keycloak";
 
-const DEV_BYPASS = import.meta.env.VITE_KEYCLOAK_DEV_BYPASS === "true";
+const DEV_BYPASS   = import.meta.env.VITE_KEYCLOAK_DEV_BYPASS === "true";
+const IS_LOCAL     = import.meta.env.VITE_USE_LOCAL_DATA === "true";
 
 const AdminPanel: React.FC = () => {
   const navigate = useNavigate();
@@ -29,6 +30,18 @@ const AdminPanel: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Backend mode indicator — warns when local/mock data is active */}
+            {IS_LOCAL ? (
+              <span className="hidden sm:flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+                <HardDrive className="h-3 w-3" />
+                Local data
+              </span>
+            ) : (
+              <span className="hidden sm:flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full bg-green-100 text-green-800 border border-green-300">
+                <Database className="h-3 w-3" />
+                API
+              </span>
+            )}
             {keycloak.tokenParsed?.preferred_username && (
               <span className="text-sm text-muted-foreground hidden sm:inline">
                 {keycloak.tokenParsed.preferred_username}
