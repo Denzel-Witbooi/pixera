@@ -84,9 +84,7 @@ services:
       - "443:443"
       - "443:443/udp"    # HTTP/3
     environment:
-      API_DOMAIN:     ${API_DOMAIN}
-      AUTH_DOMAIN:    ${AUTH_DOMAIN}
-      STORAGE_DOMAIN: ${STORAGE_DOMAIN}
+      API_DOMAIN: ${API_DOMAIN}
     volumes:
       - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
