@@ -1,12 +1,13 @@
 import React from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Calendar, ImageIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useAdapter } from "@/contexts/AdapterContext";
 import { queryKeys } from "@/lib/adapter";
 import type { Album } from "@/lib/types";
 import { resolveMediaUrl } from "@/lib/utils";
-import { Calendar, Image } from "lucide-react";
+import PublicHeader from "@/components/PublicHeader";
+import FeedbackFAB from "@/components/FeedbackFAB";
 
 const GalleryHome = () => {
   const adapter = useAdapter();
@@ -18,14 +19,15 @@ const GalleryHome = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container max-w-7xl mx-auto px-4 h-16 flex items-center">
-          <span className="font-semibold text-lg">Pixera</span>
-        </div>
-      </header>
+      <PublicHeader />
 
       <main className="container max-w-7xl mx-auto px-4 py-10">
-        <h1 className="text-3xl font-medium tracking-tight mb-8">Gallery</h1>
+        <h1 className="text-3xl font-semibold tracking-tight mb-1">Gallery</h1>
+        <p className="text-muted-foreground text-sm mb-8">
+          {albums.length > 0
+            ? `${albums.length} ${albums.length === 1 ? "album" : "albums"}`
+            : ""}
+        </p>
 
         {isLoading ? (
           <div className="flex justify-center py-16">
@@ -39,28 +41,38 @@ const GalleryHome = () => {
               <Link
                 key={album.id}
                 to={`/gallery/${album.slug}`}
-                className="group relative overflow-hidden rounded-xl hover:shadow-lg transition-shadow"
+                className="group relative block overflow-hidden rounded-xl bg-muted hover:shadow-lg transition-shadow"
               >
-                <div className="aspect-[4/3] w-full overflow-hidden rounded-xl bg-muted">
+                {/* Image */}
+                <div className="aspect-[4/3] w-full overflow-hidden">
                   <img
                     src={resolveMediaUrl(album.coverUrl)}
                     alt={album.title}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                  <h3 className="font-medium text-lg line-clamp-1">{album.title}</h3>
-                  <div className="flex items-center justify-between text-xs text-white/70 pt-1">
-                    <div className="flex items-center">
-                      <Calendar className="w-3 h-3 mr-1" />
-                      <span>{new Date(album.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Image className="w-3 h-3 mr-1" />
-                      <span>{album.itemCount} items</span>
-                    </div>
+
+                {/* Gradient + text overlay — sits on top of the image div, outside it */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent rounded-xl" />
+
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <h3 className="font-semibold text-white text-base line-clamp-1 drop-shadow">
+                    {album.title}
+                  </h3>
+                  <div className="flex items-center justify-between text-xs text-white/70 mt-1">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {new Date(album.createdAt).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <ImageIcon className="w-3 h-3" />
+                      {album.itemCount} {album.itemCount === 1 ? "item" : "items"}
+                    </span>
                   </div>
                 </div>
               </Link>
@@ -68,6 +80,8 @@ const GalleryHome = () => {
           </div>
         )}
       </main>
+
+      <FeedbackFAB />
     </div>
   );
 };
