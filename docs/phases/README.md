@@ -10,4 +10,5 @@ One document per phase. Each file records what was built, why the technology dec
 | Phase 4 | Admin foundation — Keycloak + protected routes | 2026-04-20 | Complete | [phase-4-admin-keycloak-auth-2026-04-20.md](./phase-4-admin-keycloak-auth-2026-04-20.md) |
 | Phase 5 | Admin album management | 2026-04-21 | Complete | [phase-5-admin-album-management-2026-04-21.md](./phase-5-admin-album-management-2026-04-21.md) |
 | Phase 6 | Admin media management | 2026-04-21 | Complete | [phase-6-admin-media-management-2026-04-21.md](./phase-6-admin-media-management-2026-04-21.md) |
-| Phase 7 | Production hardening | — | Pending | — |
+| Phase 7 | Public UX — landing page, gallery redesign & feedback system | 2026-04-22 | Complete | [phase-7-public-ux-landing-gallery-feedback-2026-04-22.md](./phase-7-public-ux-landing-gallery-feedback-2026-04-22.md) |
+| Phase 8 | Production hardening | — | Pending | — |
