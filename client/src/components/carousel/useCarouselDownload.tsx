@@ -1,6 +1,7 @@
 import { MediaItem } from "@/lib/types";
 import { useToast } from "@/components/ui/use-toast";
 import { buildAlbumZip } from "@/lib/buildAlbumZip";
+import { resolveMediaUrl } from "@/lib/utils";
 
 const MIME_TO_EXT: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -27,7 +28,7 @@ export const useCarouselDownload = (items: MediaItem[], currentIndex: number) =>
     if (!currentItem) return;
 
     try {
-      const response = await fetch(currentItem.url);
+      const response = await fetch(resolveMediaUrl(currentItem.url));
       const blob = await response.blob();
       const ext = extFromResponse(response, currentItem.url);
       const fileName = `${currentItem.title || `image-${currentIndex + 1}`}.${ext}`;
