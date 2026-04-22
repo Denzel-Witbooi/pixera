@@ -65,6 +65,7 @@ services:
       MinIO__Bucket:                 ${MINIO_BUCKET}
       Keycloak__Authority:           https://${AUTH_DOMAIN}/realms/${KEYCLOAK_REALM}
       Keycloak__Audience:            ${KEYCLOAK_CLIENT_ID}
+      AUTH_BYPASS:                   ${AUTH_BYPASS:-false}
       CORS_ALLOWED_ORIGINS:          ${CORS_ALLOWED_ORIGINS}
       GitHub__Token:                 ${GITHUB_TOKEN}
       GitHub__Repo:                  ${GITHUB_REPO}
@@ -82,6 +83,10 @@ services:
       - "80:80"
       - "443:443"
       - "443:443/udp"    # HTTP/3
+    environment:
+      API_DOMAIN:     ${API_DOMAIN}
+      AUTH_DOMAIN:    ${AUTH_DOMAIN}
+      STORAGE_DOMAIN: ${STORAGE_DOMAIN}
     volumes:
       - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
