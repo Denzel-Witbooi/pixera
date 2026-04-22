@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── React client ─────────────────────────────────────────────────────────────
+  client:
+    name: Client — lint & build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_API_URL: https://api.example.com
+          VITE_USE_LOCAL_DATA: false
+          VITE_KEYCLOAK_DEV_BYPASS: false
+
+      - name: Audit for vulnerabilities
+        run: npm audit --audit-level=high
+        continue-on-error: true   # informational — won't fail the build until you triage
+
+  # ── .NET API ─────────────────────────────────────────────────────────────────
+  server:
+    name: Server — build & audit
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server/Pixera.Api
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.x
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore -c Release
+
+      - name: Audit NuGet packages
+        run: dotnet list package --vulnerable --include-transitive
+        continue-on-error: true   # informational
