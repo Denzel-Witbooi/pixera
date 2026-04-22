@@ -24,9 +24,11 @@ builder.Services.AddMinio(opts => opts
     .WithSSL(minioCfg.GetValue<bool>("UseSSL")));
 
 // ── Authentication ─────────────────────────────────────────────────────────────
-// Development: every request is automatically authenticated — no Keycloak needed.
-// Staging / Production: validate JWTs issued by the Keycloak realm.
-if (builder.Environment.IsDevelopment())
+// Development or AUTH_BYPASS=true: every request is auto-authenticated.
+// Production (no bypass): validate JWTs issued by the Keycloak realm.
+var authBypass = builder.Configuration.GetValue<bool>("AUTH_BYPASS");
+
+if (builder.Environment.IsDevelopment() || authBypass)
 {
     builder.Services.AddAuthentication("DevBypass")
         .AddScheme<AuthenticationSchemeOptions, DevBypassAuthHandler>("DevBypass", _ => { });
